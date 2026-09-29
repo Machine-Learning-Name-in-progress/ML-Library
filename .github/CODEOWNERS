@@ -1,0 +1,15 @@
+# Global reviewers
+*                                              @V-inn @Mateus-AO
+
+/src                                           @Machine-Learning-Name-in-progress/library-maintainers
+/docs                                          @Machine-Learning-Name-in-progress/library-docs
+
+/src/ml_library/metrics                        @Machine-Learning-Name-in-progress/evaluation-metrics
+/src/ml_library/model_selection                @Machine-Learning-Name-in-progress/evaluation-model-selection
+
+/src/ml_library/models/regression              @Machine-Learning-Name-in-progress/models-linear-regression
+/src/ml_library/models/classification          @Machine-Learning-Name-in-progress/models-classification
+/src/ml_library/models/neural_network          @Machine-Learning-Name-in-progress/models-neural-network
+/src/ml_library/models/unsupervised            @Machine-Learning-Name-in-progress/models-unsupervised
+
+/src/ml_library/preprocessing                  @Machine-Learning-Name-in-progress/data-processing
