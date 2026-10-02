@@ -13,3 +13,14 @@
 /src/ml_library/models/unsupervised            @Machine-Learning-Name-in-progress/models-unsupervised
 
 /src/ml_library/preprocessing                  @Machine-Learning-Name-in-progress/data-processing
+
+
+/tests/metrics                        @Machine-Learning-Name-in-progress/evaluation-metrics
+/tests/model_selection                @Machine-Learning-Name-in-progress/evaluation-model-selection
+
+/tests/models/regression              @Machine-Learning-Name-in-progress/models-linear-regression
+/tests/models/classification          @Machine-Learning-Name-in-progress/models-classification
+/tests/models/neural_network          @Machine-Learning-Name-in-progress/models-neural-network
+/tests/models/unsupervised            @Machine-Learning-Name-in-progress/models-unsupervised
+
+/tests/preprocessing                  @Machine-Learning-Name-in-progress/data-processing
