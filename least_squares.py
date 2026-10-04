@@ -40,7 +40,7 @@ class ordinary_least_squares:
     def RMSE(self, X: np.ndarray, y: np.ndarray) -> float:
         return np.sqrt(self.MSE(X,y))
 
-    def R2(self, X, y):
+    def R2(self, X: np.ndarray, y: np.ndarray) -> float:
         y_r = np.array(y)
         y_hat = self.predict(X)
 
