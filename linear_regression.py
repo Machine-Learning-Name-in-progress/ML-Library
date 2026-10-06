@@ -1,27 +1,13 @@
 import numpy as np
 
-class ordinary_least_squares:
+class linear_regression:
     def __init__(self):
         self.coef = []
         self.intercept = 0
         return
-
-    def train(self, X: np.ndarray, y: np.ndarray, intercept: bool = True) -> None:
-        X_t = np.array(X)
-        y_t = np.array(y)
-
-        if(intercept):
-            ones_column = np.ones((X_t.shape[0],1))
-            X_t = np.hstack((ones_column, X_t))
-
-        beta = np.linalg.solve(X_t.T @ X_t, X_t.T @ y_t)
-
-        if(intercept):
-            self.intercept = beta[0]
-            beta = beta[1:]
-
-        self.coef = beta
-        return
+    
+    def train(self):
+        pass
     
     def predict(self, X: np.ndarray) -> np.ndarray:
         X_p = np.array(X)
@@ -46,3 +32,22 @@ class ordinary_least_squares:
 
         r2 = 1 - (np.sum((y_r-y_hat)**2))/(np.sum((y_r-np.mean(y_r))**2))
         return r2
+
+class ordinary_least_squares(linear_regression):
+    def train(self, X: np.ndarray, y: np.ndarray, intercept: bool = True) -> None:
+        X_t = np.array(X)
+        y_t = np.array(y)
+        self.intercept = 0
+
+        if(intercept):
+            ones_column = np.ones((X_t.shape[0],1))
+            X_t = np.hstack((ones_column, X_t))
+
+        beta = np.linalg.solve(X_t.T @ X_t, X_t.T @ y_t)
+
+        if(intercept):
+            self.intercept = beta[0]
+            beta = beta[1:]
+
+        self.coef = beta
+        return
