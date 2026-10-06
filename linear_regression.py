@@ -1,6 +1,6 @@
 import numpy as np
 
-class linear_regression:
+class _linear_regression:
     def __init__(self):
         self.coef = []
         self.intercept = 0
@@ -33,7 +33,7 @@ class linear_regression:
         r2 = 1 - (np.sum((y_r-y_hat)**2))/(np.sum((y_r-np.mean(y_r))**2))
         return r2
 
-class ordinary_least_squares(linear_regression):
+class ordinary_least_squares(_linear_regression):
     def train(self, X: np.ndarray, y: np.ndarray, intercept: bool = True) -> None:
         X_t = np.array(X)
         y_t = np.array(y)
@@ -52,28 +52,24 @@ class ordinary_least_squares(linear_regression):
         self.coef = beta
         return
 
-class ridge(linear_regression):
+class ridge(_linear_regression):
     def train(self, X: np.ndarray, y: np.ndarray, lam: float, intercept: bool = True) -> None:
         X_t = np.array(X)
         y_t = np.array(y)
+        X_norm, y_norm = self._normalize(X_t,y_t)
+
         I = np.eye(X_t.shape[1])
         self.intercept = 0
 
-        if(intercept):
-            ones_column = np.ones((X_t.shape[0],1))
-            X_t = np.hstack((ones_column, X_t))
-
-            zeros_column = np.zeros((I.shape[0],1))
-            I = np.hstack((zeros_column, I))
-
-            zeros_line = np.zeros((1,I.shape[1]))
-            I = np.vstack((zeros_line, I))
-
-        beta = np.linalg.solve(X_t.T @ X_t + lam*I, X_t.T @ y_t)
-
-        if(intercept):
-            self.intercept = beta[0]
-            beta = beta[1:]
-            
+        beta = np.linalg.solve(X_norm.T @ X_norm + lam*I, X_norm.T @ y_norm)
+        beta = np.std(y) * beta/np.std(X_t, axis = 0)
         self.coef = beta
+
+        if(intercept):
+            self.intercept = np.mean(y_t) - np.mean(X_t, axis=0) @ beta
         return
+
+    def _normalize(self, X, y):
+        X_n = (X - np.mean(X, axis=0))/np.std(X, axis = 0)
+        y_n = (y - np.mean(y))/np.std(y)
+        return X_n, y_n
