@@ -69,7 +69,7 @@ class ridge(_linear_regression):
             self.intercept = np.mean(y_t) - np.mean(X_t, axis=0) @ beta
         return
 
-    def _normalize(self, X, y):
+    def _normalize(self, X: np.ndarray, y: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
         X_n = (X - np.mean(X, axis=0))/np.std(X, axis = 0)
         y_n = (y - np.mean(y))/np.std(y)
         return X_n, y_n
