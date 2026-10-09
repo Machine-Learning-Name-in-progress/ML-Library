@@ -62,7 +62,7 @@ class ridge(_linear_regression):
         self.intercept = 0
 
         beta = np.linalg.solve(X_norm.T @ X_norm + lam*I, X_norm.T @ y_norm)
-        beta = np.std(y) * beta/np.std(X_t, axis = 0)
+        beta = np.std(y_t) * beta/np.std(X_t, axis = 0)
         self.coef = beta
 
         if(intercept):
@@ -70,6 +70,43 @@ class ridge(_linear_regression):
         return
 
     def _normalize(self, X: np.ndarray, y: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+        X_n = (X - np.mean(X, axis=0))/np.std(X, axis = 0)
+        y_n = (y - np.mean(y))/np.std(y)
+        return X_n, y_n
+
+class lasso(_linear_regression):
+    def train(self, X: np.ndarray, y: np.ndarray, lam: float, intercept: bool = True, eps: float = 1e-4, max_iter: int = 1e4) -> None:
+        X_t = np.array(X)
+        y_t = np.array(y)
+        X_norm, y_norm = self._normalize(X_t,y_t)
+        self.intercept = 0
+
+        beta = self._cordinate_descent(X_norm, y_norm, lam, eps, max_iter)
+
+        beta = np.std(y_t) * beta/np.std(X_t, axis = 0).reshape(X_t.shape[1],1)
+        self.coef = beta.flatten()
+
+        if(intercept):
+            self.intercept = np.mean(y_t) - np.mean(X_t, axis=0) @ beta
+        return
+
+    def _cordinate_descent(self, X: np.ndarray, y: np.ndarray, lam: float, eps: float, max_iter: int) -> np.ndarray:
+      p = X.shape[1]
+      beta = np.zeros(p).reshape(p,1)
+      beta_old = np.ones(p).reshape(p,1)
+      y = y[:, np.newaxis]
+      iter = 0
+
+      while(np.sum(np.abs(beta-beta_old))>eps or iter<max_iter):
+          beta_old = beta
+          R = y + X*beta.T - X @ beta
+          z = np.sum(X*R, axis=0).reshape(p,1)
+          beta = (np.sign(z)*np.maximum(0, np.abs(z)-lam/2))/X.shape[0]
+          iter += 1
+
+      return beta
+
+    def _normalize(self, X: np.ndarray, y: np.ndarray) -> tuple[(np.ndarray, np.ndarray)]:
         X_n = (X - np.mean(X, axis=0))/np.std(X, axis = 0)
         y_n = (y - np.mean(y))/np.std(y)
         return X_n, y_n
