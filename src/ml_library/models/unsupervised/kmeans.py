@@ -36,7 +36,7 @@ class Kmeans:
         return self._clusters
 
     # todo: Move this verification to a library-wide _verification Module or something as it's useful for more cases.
-    def _check1DArray(self, points: np.ndarray):
+    def _check_1d_array(self, points: np.ndarray):
         if points.ndim != 2:
             raise ValueError(
                 "Expected a 2-D array of shape (n_points, n_features). "
@@ -58,7 +58,7 @@ class Kmeans:
             Self
         """
 
-        self._check1DArray(points)
+        self._check_1d_array(points)
 
         rng = _random.get_rng(self.seed)
         
@@ -75,19 +75,19 @@ class Kmeans:
             self._clusters = np.zeros(n, dtype=int)
             return self
         
-        self._centroids = self._initializeCentroids(self.k, points, rng)
+        self._centroids = self._initialize_centroids(self.k, points, rng)
         self._clusters = None
 
         # We repeat the search for new centroids until the clusters no longer change in comparison to the last iteration.
 
         for _ in range(self.max_iter):
-            newClusters = self._findNearestCentroid(self._centroids, points)
+            newClusters = self._find_nearest_centroid(self._centroids, points)
 
             if self._clusters is not None and np.array_equal(newClusters, self._clusters):
                 break
 
             self._clusters = newClusters
-            self._centroids = self._findNewCentroids(newClusters, points, self._centroids)
+            self._centroids = self._find_new_centroids(newClusters, points, self._centroids)
         else:
             warnings.warn("Max-iteration reached, K-means did not achieve convergence")
 
@@ -104,14 +104,14 @@ class Kmeans:
             np.ndarray
         """
 
-        self._check1DArray(new_points)
+        self._check_1d_array(new_points)
 
         if new_points.shape[1] != self.centroids.shape[1]:
             raise ValueError("Dimension of new_points doesn't match the existing ones.")
 
-        return self._findNearestCentroid(self.centroids, new_points)
+        return self._find_nearest_centroid(self.centroids, new_points)
 
-    def _findNewCentroids(self, labels, points, old_centroids):
+    def _find_new_centroids(self, labels, points, old_centroids):
         centroids = np.empty((old_centroids.shape[0], points.shape[1]))
 
         for i in range(old_centroids.shape[0]):
@@ -124,7 +124,7 @@ class Kmeans:
 
         return centroids
         
-    def _findNearestCentroid(self,centroids, points):
+    def _find_nearest_centroid(self,centroids, points):
         # We want ||x - c||^2 which is the squared distance to each centroid
 
         # We can factor it as ||x||^2 - 2xc + ||c||^2
@@ -144,7 +144,7 @@ class Kmeans:
 
         return categories
 
-    def _initializeCentroids(self,k,points,rng):
+    def _initialize_centroids(self,k,points,rng):
         """
         Uses the k-means++ initial centroid strategy so the starting point is closer to convergence, and it's also better than falling in to local minimum solutions.
         """
