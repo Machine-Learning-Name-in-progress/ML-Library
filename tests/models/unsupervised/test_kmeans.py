@@ -57,7 +57,7 @@ def test_max_iter_warn():
     with pytest.warns(UserWarning):
         Kmeans(5, seed=0, max_iter=1).fit(X)
 
-@pytest.mark.parametrize("seed", range(100)) #Tests for seed = 0,1,2,...,9
+@pytest.mark.parametrize("seed", range(10)) #Tests for seed = 0,1,2,...,9
 def test_converged_fit_is_fixed_point(seed):
     X = _random.get_rng(seed).normal(size=(200, 2))
     km = Kmeans(4, seed=seed, max_iter=1000).fit(X)
