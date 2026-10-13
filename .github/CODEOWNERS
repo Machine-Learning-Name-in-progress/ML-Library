@@ -3,6 +3,7 @@
 
 /src                                           @Machine-Learning-Name-in-progress/library-maintainers
 /docs                                          @Machine-Learning-Name-in-progress/library-docs
+/examples                                      @Machine-Learning-Name-in-progress/library-maintainers
 
 /src/ml_library/metrics                        @Machine-Learning-Name-in-progress/evaluation-metrics
 /src/ml_library/model_selection                @Machine-Learning-Name-in-progress/evaluation-model-selection
@@ -24,3 +25,4 @@
 /tests/models/unsupervised            @Machine-Learning-Name-in-progress/models-unsupervised
 
 /tests/preprocessing                  @Machine-Learning-Name-in-progress/data-processing
+
