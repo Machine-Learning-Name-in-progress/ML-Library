@@ -81,13 +81,13 @@ class Kmeans:
         # We repeat the search for new centroids until the clusters no longer change in comparison to the last iteration.
 
         for _ in range(self.max_iter):
-            newClusters = self._find_nearest_centroid(self._centroids, points)
+            new_clusters = self._find_nearest_centroid(self._centroids, points)
 
-            if self._clusters is not None and np.array_equal(newClusters, self._clusters):
+            if self._clusters is not None and np.array_equal(new_clusters, self._clusters):
                 break
 
-            self._clusters = newClusters
-            self._centroids = self._find_new_centroids(newClusters, points, self._centroids)
+            self._clusters = new_clusters
+            self._centroids = self._find_new_centroids(new_clusters, points, self._centroids)
         else:
             warnings.warn("Max-iteration reached, K-means did not achieve convergence")
 
@@ -167,42 +167,3 @@ class Kmeans:
             dsquare = np.minimum(dsquare, ((points - centroids[i])**2).sum(axis=1))
 
         return centroids
-
-if __name__ == "__main__":
-    import matplotlib.pyplot as plt
-
-    #_random.set_seed(3)
-
-    data_rng = _random.get_rng(10)
-    X = data_rng.normal(size=(60, 2))
-
-    #print(X)
-
-    kmeans = Kmeans(4, seed=10)
-    kmeans.fit(X)
-
-    H = kmeans._centroids
-    c = kmeans._clusters
-
-    
-
-
-    def plot_clusters(X, labels, centroids, title=None):
-        k = len(centroids)
-        color_args = dict(cmap="tab10", vmin=0, vmax=9)
-
-        plt.scatter(X[:, 0], X[:, 1], c=labels, s=30, alpha=0.7, **color_args) #type:ignore
-        plt.scatter(centroids[:, 0], centroids[:, 1], c=np.arange(k),
-                    marker="X", s=200, edgecolors="black", linewidths=1.5, #type:ignore
-                    **color_args) #type:ignore
-
-        plt.gca().set_aspect("equal")
-        if title:
-            plt.title(title)
-        plt.show()
-
-    plot_clusters(X, c, H)
-    
-    
-
-        
