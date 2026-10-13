@@ -86,3 +86,5 @@ class knn:
         predictions = [self.predict(point) for point in x_new]
         
         return predictions
+    
+    # TODO: a K-changer method, if it make sense
