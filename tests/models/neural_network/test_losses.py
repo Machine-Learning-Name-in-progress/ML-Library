@@ -1,4 +1,4 @@
-"""TEst module for loss functions on neural networks."""
+"""Test module for loss functions on neural networks."""
 
 import numpy as np
 from ml_library.models.neural_network.losses import (
