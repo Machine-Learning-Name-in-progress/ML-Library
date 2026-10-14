@@ -1,15 +1,9 @@
 import numpy as np
-from ml_library.utils import _solvers
-
 class _BaseDiscriminant:
-    def __init__(self, solver: str = "cholesky", reg_param: float = 0.0) -> None:
-        if solver not in _solvers.solvers:
-            raise ValueError(f"Selected solver does not exist. Availables solvers are: {_solvers.solvers}")
-
+    def __init__(self, reg_param: float = 0.0) -> None:
         if reg_param < 0 or reg_param > 1:
             raise ValueError("reg_param must be a value in [0,1]")
-        
-        self.solver = solver
+
         self.reg_param = reg_param # used for regularization by mixing sample_cov with the identity matrix:
                                     # (1 - r)*sample_cov + r * I
     def _regularize(self, cov):
@@ -42,30 +36,96 @@ class _BaseDiscriminant:
         return self.classes_[np.argmax(self.decision(X), axis=1)]
 
     def predict_probabilities(self, X: np.ndarray):
-        pass
+        scores = self.decision(X)
+        scores = scores - scores.max(axis=1, keepdims=True)
+        exp = np.exp(scores)
+        return exp / exp.sum(axis=1, keepdims=True)
 
 class QDA(_BaseDiscriminant):
     def fit(self, X: np.ndarray, y: np.ndarray):
-        pass
+        y_idx = self._fit_common(X,y)
+        self.covariances_ = []
+
+        self._L_inv = []
+        self._log_det = []
+
+        for k in range(len(self.classes_)):
+            Xk = X[y_idx == k] - self.means_[k]
+            cov = Xk.T @ Xk / len(Xk - 1)
+            L = np.linalg.cholesky(cov)
+
+            self._L_inv.append(np.linalg.inv(L)) #triangular and well-conditioned
+            self._log_det.append(2.0 * np.sum(np.log(np.diag(L))))
+            self.covariances_.append(self._regularize(cov))
+        return self
+
+    @staticmethod
+    def _mahalanobis_sq(X, mean, L_inv):
+        Z = (X - mean) @ L_inv.T
+        return np.sum(Z * Z, axis=1)
 
     def decision(self, X):
-        return super().decision(X)
+        n, K = X.shape[0], len(self.classes_)
+        scores = np.empty((n, K))
+        for k in range(K):
+            scores[:, k] = (-0.5 * self._log_det[k]
+                            - 0.5 * self._mahalanobis_sq(X, self.means_[k], self._L_inv[k])
+                            + np.log(self.priors_[k]))
+        return scores
 
 class LDA(_BaseDiscriminant):
     def fit(self, X, y):
-        pass
+        y_idx = self._fit_common(X, y)
+        centered = X - self.means_[y_idx]
+        cov = centered.T @ centered / (len(X) - len(self.classes_))
+        cov = self._regularize(cov)
+        self.coef_ = np.linalg.solve(cov, self.means_.T).T
+        self.intercept_ = (-0.5 * np.sum(self.coef_ * self.means_, axis=1) + np.log(self.priors_))
+
+        return self
 
     def decision(self, X):
-        return super().decision(X)
+        return X @ self.coef_.T + self.intercept_
 
 if __name__ == "__main__":
+    import matplotlib.pyplot as plt
     from ml_library.utils._random import get_rng
 
-    B = _BaseDiscriminant()
     rng = get_rng(0)
 
-    X = rng.normal(size=(40,2))
-    y = rng.integers(0,2,size=40)
+    # Three Gaussian classes with different means and covariances
+    means = [np.array([0.0, 0.0]), np.array([3.0, 3.0]), np.array([0.0, 4.0])]
+    covs = [
+        np.array([[1.0, 0.8], [0.8, 1.0]]),    # stretched along the diagonal
+        np.array([[0.3, 0.0], [0.0, 2.0]]),    # tall and narrow
+        np.array([[2.0, -0.5], [-0.5, 0.5]]),  # wide
+    ]
+    n_per_class = 100
 
-    B._fit_common(X,y)
+    X = np.vstack([rng.multivariate_normal(m, c, size=n_per_class) for m, c in zip(means, covs)])
+    y = np.repeat(np.arange(len(means)), n_per_class)
+
+    # Grid covering the data, to color each point of the plane by its predicted class
+    pad = 1.0
+    x_min, x_max = X[:, 0].min() - pad, X[:, 0].max() + pad
+    y_min, y_max = X[:, 1].min() - pad, X[:, 1].max() + pad
+    xx, yy = np.meshgrid(np.linspace(x_min, x_max, 300), np.linspace(y_min, y_max, 300))
+    grid = np.column_stack([xx.ravel(), yy.ravel()])
+
+    fig, axes = plt.subplots(1, 2, figsize=(12, 5), sharex=True, sharey=True)
+    K = len(means)
+
+    for ax, model, name in zip(axes, [LDA(), QDA()], ["LDA", "QDA"]):
+        model.fit(X, y)
+        Z = model.predict(grid).reshape(xx.shape)
+        acc = np.mean(model.predict(X) == y)
+
+        ax.contourf(xx, yy, Z, levels=np.arange(K + 1) - 0.5, cmap="Pastel1", alpha=0.8)
+        ax.scatter(X[:, 0], X[:, 1], c=y, cmap="Set1", edgecolor="k", s=20)
+        ax.scatter(model.means_[:, 0], model.means_[:, 1], c="black", marker="X", s=150, label="class means")
+        ax.set_title(f"{name}  (train accuracy: {acc:.2%})")
+        ax.legend(loc="upper left")
+
+    plt.tight_layout()
+    plt.show()
 
