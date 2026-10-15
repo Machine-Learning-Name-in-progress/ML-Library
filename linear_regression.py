@@ -30,6 +30,9 @@ class _linear_regression:
             np.ndarray: The predicted value for each line of the X matrix.
         """
         X_p = np.array(X)
+
+        self._exceptions(X_p, np.zeros(X_p.shape[0]))
+        
         y = X_p @ self.coef + self.intercept
         return y
 
@@ -44,7 +47,11 @@ class _linear_regression:
             float: The residual sum of squares.
         """
         y_r = np.array(y)
-        y_hat = self.predict(X)
+        X_r = np.array(X)
+
+        self._exceptions(X_r, y_r)
+        
+        y_hat = self.predict(X_r)
         rss = np.sum((y_r-y_hat)**2)
         return rss
 
@@ -82,11 +89,39 @@ class _linear_regression:
         Returns:
             float: The R-squared.
         """
+        X_r = np.array(X)
         y_r = np.array(y)
-        y_hat = self.predict(X)
+
+        self._exceptions(X_r, y_r)
+
+        y_hat = self.predict(X_r)
 
         r2 = 1 - (np.sum((y_r-y_hat)**2))/(np.sum((y_r-np.mean(y_r))**2))
         return r2
+
+    def _exceptions(self, X: np.ndarray, y: np.ndarray) -> None:
+        """Private method to log internal exceptions"""
+        if(self.coef==[]):
+            raise ValueError("Model is not yet trained, call .train() first.")
+        
+        if not np.issubdtype(X.dtype, np.number):
+            raise TypeError(f"Invalid data type: Expected feature matrix (X) to have a numeric data type, got '{X.dtype}'")
+        
+        if not np.issubdtype(y.dtype, np.number):
+            raise TypeError(f"Invalid data type: Expected target vector (y) to have a numeric data type, got '{y.dtype}'")
+        
+        if(X.ndim!=2):
+            raise ValueError("Expected a 2-D array of shape (n_points, n_features).")
+        
+        if(y.ndim!=1):
+            raise ValueError("Expected a 1-D array of shape (n_points, ).")
+        
+        if(X.shape[0]!=y.shape[0]):
+            raise ValueError("Dimension mismatch: The number of rows in feature matrix (X) must equal the number of samples in the target vector (y).")
+        
+        if(X.shape[1]!=len(self.coef)):
+            raise ValueError("Dimension mismatch: The number of columns in feature matrix (X) must equal the number of model coefficients.")
+        return
 
 class ordinary_least_squares(_linear_regression):
     """A public class for ordinary least squares linear regression.
@@ -110,6 +145,9 @@ class ordinary_least_squares(_linear_regression):
         """
         X_t = np.array(X)
         y_t = np.array(y)
+
+        self._exceptions(X_t, y_t, intercept)
+
         self.intercept = 0
 
         if(intercept):
@@ -123,6 +161,27 @@ class ordinary_least_squares(_linear_regression):
             beta = beta[1:]
 
         self.coef = beta
+        return
+
+    def _exceptions(self, X: np.ndarray, y: np.ndarray, intercept: bool) -> None:
+        """Private method to log internal exceptions"""
+        if not np.issubdtype(X.dtype, np.number):
+            raise TypeError(f"Invalid data type: Expected feature matrix (X) to have a numeric data type, got '{X.dtype}'")
+        
+        if not np.issubdtype(y.dtype, np.number):
+            raise TypeError(f"Invalid data type: Expected target vector (y) to have a numeric data type, got '{y.dtype}'")
+
+        if not isinstance(intercept, bool):
+            raise TypeError(f"Invalid data type: Expected intercept flag (intercept) to have a bool data type, got '{type(intercept).__name__}'")
+        
+        if(X.ndim!=2):
+            raise ValueError("Expected a 2-D array of shape (n_points, n_features).")
+        
+        if(y.ndim!=1):
+            raise ValueError("Expected a 1-D array of shape (n_points, ).")
+        
+        if(X.shape[0]!=y.shape[0]):
+            raise ValueError("Dimension mismatch: The number of rows in feature matrix (X) must equal the number of samples in the target vector (y).")
         return
 
 class ridge(_linear_regression):
@@ -148,6 +207,9 @@ class ridge(_linear_regression):
         """
         X_t = np.array(X)
         y_t = np.array(y)
+
+        self._exceptions(X_t, y_t, lam, intercept)
+
         X_norm, y_norm = self._normalize(X_t,y_t)
 
         I = np.eye(X_t.shape[1])
@@ -177,6 +239,33 @@ class ridge(_linear_regression):
         y_n = (y - np.mean(y))/np.std(y)
         return X_n, y_n
 
+    def _exceptions(self, X: np.ndarray, y: np.ndarray, lam: float, intercept: bool) -> None:
+        """Private method to log internal exceptions"""
+        if not np.issubdtype(X.dtype, np.number):
+            raise TypeError(f"Invalid data type: Expected feature matrix (X) to have a numeric data type, got '{X.dtype}'")
+        
+        if not np.issubdtype(y.dtype, np.number):
+            raise TypeError(f"Invalid data type: Expected target vector (y) to have a numeric data type, got '{y.dtype}'")
+
+        if not isinstance(lam, float):
+            raise TypeError(f"Invalid data type: Expected lambda hyperparameter (lam) to have a float data type, got '{type(lam).__name__}'")
+
+        if not isinstance(intercept, bool):
+            raise TypeError(f"Invalid data type: Expected intercept flag (intercept) to have a bool data type, got '{type(intercept).__name__}'")
+
+        if(lam<0):
+            raise ValueError("Invalid value for (lam): Lambda hyperparameter (lam) must be a non-negative value.")
+        
+        if(X.ndim!=2):
+            raise ValueError("Expected a 2-D array of shape (n_points, n_features).")
+        
+        if(y.ndim!=1):
+            raise ValueError("Expected a 1-D array of shape (n_points, ).")
+        
+        if(X.shape[0]!=y.shape[0]):
+            raise ValueError("Dimension mismatch: The number of rows in feature matrix (X) must equal the number of samples in the target vector (y).")
+        return
+
 class lasso(_linear_regression):
     """A public class for lasso linear regression.
 
@@ -190,6 +279,8 @@ class lasso(_linear_regression):
             y (np.ndarray): The empirical target values.
             lam (float): Regularization lasso hyperparameter. Should be a positive value. Higher values force the slope coefficients closer to 0.
             intercept (bool, optional): Decide whether to train the method with an intercept coefficient or not.
+            eps: (float, optional): Specify a convergence tolerance for the coordinate descent method.
+            max_iter: (int, optional): The maximum number of iterations in the coordinate descent method to avoid infinity loops.
 
         Returns:
             None
@@ -200,6 +291,9 @@ class lasso(_linear_regression):
         """
         X_t = np.array(X)
         y_t = np.array(y)
+
+        self._exceptions(X_t, y_t, lam, intercept, eps, max_iter)
+
         X_norm, y_norm = self._normalize(X_t,y_t)
         self.intercept = 0
 
@@ -259,3 +353,42 @@ class lasso(_linear_regression):
         X_n = (X - np.mean(X, axis=0))/np.std(X, axis = 0)
         y_n = (y - np.mean(y))/np.std(y)
         return X_n, y_n
+
+    def _exceptions(self, X: np.ndarray, y: np.ndarray, lam: float, intercept: bool, eps: float, max_iter: int) -> None:
+        """Private method to log internal exceptions"""
+        if not np.issubdtype(X.dtype, np.number):
+            raise TypeError(f"Invalid data type: Expected feature matrix (X) to have a numeric data type, got '{X.dtype}'")
+        
+        if not np.issubdtype(y.dtype, np.number):
+            raise TypeError(f"Invalid data type: Expected target vector (y) to have a numeric data type, got '{y.dtype}'")
+
+        if not isinstance(lam, float):
+            raise TypeError(f"Invalid data type: Expected lambda hyperparameter (lam) to have a float data type, got '{type(lam).__name__}'")
+
+        if not isinstance(intercept, bool):
+            raise TypeError(f"Invalid data type: Expected intercept flag (intercept) to have a bool data type, got '{type(intercept).__name__}'")
+
+        if not isinstance(eps, float):
+            raise TypeError(f"Invalid data type: Expected epslon convergence parameter (eps) to have a float data type, got '{type(eps).__name__}'")
+
+        if not isinstance(max_iter, int):
+            raise TypeError(f"Invalid data type: Expected maximum of iterations convergence parameter (max_iter) to have a int data type, got '{type(max_iter).__name__}'")
+
+        if(lam<0):
+            raise ValueError("Invalid value for (lam): Lambda hyperparameter (lam) must be a non-negative value.")
+
+        if(eps<0):
+            raise ValueError("Invalid value for (eps): Epslon convergence parameter (eps) must be a non-negative value.")
+
+        if(max_iter<=0):
+            raise ValueError("Invalid value for (max_iter): Maximum of iterations convergence parameter (max_iter) must be a positive value.")
+        
+        if(X.ndim!=2):
+            raise ValueError("Expected a 2-D array of shape (n_points, n_features).")
+        
+        if(y.ndim!=1):
+            raise ValueError("Expected a 1-D array of shape (n_points, ).")
+        
+        if(X.shape[0]!=y.shape[0]):
+            raise ValueError("Dimension mismatch: The number of rows in feature matrix (X) must equal the number of samples in the target vector (y).")
+        return
