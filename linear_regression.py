@@ -146,7 +146,7 @@ class ordinary_least_squares(_linear_regression):
         X_t = np.array(X)
         y_t = np.array(y)
 
-        self._exceptions(X_t, y_t, intercept)
+        self._ols_exceptions(X_t, y_t, intercept)
 
         self.intercept = 0
 
@@ -163,7 +163,7 @@ class ordinary_least_squares(_linear_regression):
         self.coef = beta
         return
 
-    def _exceptions(self, X: np.ndarray, y: np.ndarray, intercept: bool) -> None:
+    def _ols_exceptions(self, X: np.ndarray, y: np.ndarray, intercept: bool) -> None:
         """Private method to log internal exceptions"""
         if not np.issubdtype(X.dtype, np.number):
             raise TypeError(f"Invalid data type: Expected feature matrix (X) to have a numeric data type, got '{X.dtype}'")
@@ -208,7 +208,7 @@ class ridge(_linear_regression):
         X_t = np.array(X)
         y_t = np.array(y)
 
-        self._exceptions(X_t, y_t, lam, intercept)
+        self._ridge_exceptions(X_t, y_t, lam, intercept)
 
         X_norm, y_norm = self._normalize(X_t,y_t)
 
@@ -239,7 +239,7 @@ class ridge(_linear_regression):
         y_n = (y - np.mean(y))/np.std(y)
         return X_n, y_n
 
-    def _exceptions(self, X: np.ndarray, y: np.ndarray, lam: float, intercept: bool) -> None:
+    def _ridge_exceptions(self, X: np.ndarray, y: np.ndarray, lam: float, intercept: bool) -> None:
         """Private method to log internal exceptions"""
         if not np.issubdtype(X.dtype, np.number):
             raise TypeError(f"Invalid data type: Expected feature matrix (X) to have a numeric data type, got '{X.dtype}'")
@@ -292,7 +292,7 @@ class lasso(_linear_regression):
         X_t = np.array(X)
         y_t = np.array(y)
 
-        self._exceptions(X_t, y_t, lam, intercept, eps, max_iter)
+        self._lasso_exceptions(X_t, y_t, lam, intercept, eps, max_iter)
 
         X_norm, y_norm = self._normalize(X_t,y_t)
         self.intercept = 0
@@ -354,7 +354,7 @@ class lasso(_linear_regression):
         y_n = (y - np.mean(y))/np.std(y)
         return X_n, y_n
 
-    def _exceptions(self, X: np.ndarray, y: np.ndarray, lam: float, intercept: bool, eps: float, max_iter: int) -> None:
+    def _lasso_exceptions(self, X: np.ndarray, y: np.ndarray, lam: float, intercept: bool, eps: float, max_iter: int) -> None:
         """Private method to log internal exceptions"""
         if not np.issubdtype(X.dtype, np.number):
             raise TypeError(f"Invalid data type: Expected feature matrix (X) to have a numeric data type, got '{X.dtype}'")
