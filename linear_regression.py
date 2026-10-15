@@ -88,6 +88,7 @@ class lasso(_linear_regression):
 
         if(intercept):
             self.intercept = np.mean(y_t) - np.mean(X_t, axis=0) @ beta
+            self.intercept = self.intercept[0]
         return
 
     def _cordinate_descent(self, X: np.ndarray, y: np.ndarray, lam: float, eps: float, max_iter: int) -> np.ndarray:
