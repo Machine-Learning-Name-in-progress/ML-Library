@@ -55,9 +55,22 @@ class polynomial_regression:
         if max_iter <= 0:
             raise ValueError("Invalid value for (max_iter): Maximum of iterations convergence parameter (max_iter) must be a positive value.")
 
-    def _exceptions_data(self, x: np.ndarray, y: np.ndarray) -> None:
-        # TODO: Verify inputs before building the design matrix
-        pass
+    def _exceptions_data(self, x: np.ndarray, y: np.ndarray = None) -> None:
+        if not np.issubdtype(x.dtype, np.number):
+            raise TypeError(f"Invalid data type: Expected feature vector (x) to have a numeric data type, got '{x.dtype}'.")
+
+        if x.ndim != 1:
+            raise ValueError(f"Expected a 1-D array of shape (n_points) for polynomial regression input, got '{x.ndim}-D'.")
+
+        if y is not None:
+            if not np.issubdtype(y.dtype, np.number):
+                raise TypeError(f"Invalid data type: Expected target vector (y) to have a numeric data type, got '{y.dtype}'.")
+            
+            if y.ndim != 1:
+                raise ValueError(f"Expected a 1-D array of shape (n_points) for polynomial regression output, got '{y.ndim}-D'.")
+            
+            if x.shape[0] != y.shape[0]:
+                raise ValueError("Dimension mismatch: Feature vector (x) and target vector (y) must have the same length.")
 
     def _build_design(self, x: np.ndarray) -> np.ndarray:
         X = np.array([[val_xi**d for d in range(1, self.degree + 1)] for val_xi in x])
@@ -78,7 +91,9 @@ class polynomial_regression:
         self.model_intercept = self.model.intercept
 
     def predict(self, x: np.ndarray) -> np.ndarray:
+        self._exceptions_data(x)
         X = self._build_design(x)
+
         preds = self.model.predict(X)
         return preds
 
@@ -97,25 +112,36 @@ def R2(y: np.ndarray, y_pred: np.ndarray) -> float:
     pass
 
 if __name__ == "__main__":
-    # TODO: remove temporary tests
-    x_teste = np.array([-2, -1, 0, 1, 2])
-    y_teste = 3 + 2*x_teste + x_teste**2
+    # TODO: remove temporary tests. 
+    # TODO: consider numerical stability (i.e.: deg=5 for x_test with 7 entries below).
+    # TODO: alert for insufficient data for degree of regression (i.e.: deg=5 below).
+    x_test = np.array([-2, -1, 0, 1, 2])
+    y_test = 3 + 2*x_test + x_test**2
     np.random.seed(67)
-    erro = np.random.normal(0.0, 0.5, size=len(x_teste))
-    y_ruido = y_teste + erro
-    grau = 5
+    error = np.random.normal(0.0, 0.5, size=len(x_test))
+    y_noise = y_test + error
+    deg = 4
 
-    # Teste OLS
-    teste_ols = polynomial_regression(degree=grau, model_choice='ols', intercept=True)
-    teste_ols.train(x_teste, y_ruido)
-    print(f"Coeficientes OLS: {teste_ols.model_intercept:.3f} e {teste_ols.coef}")
+    x_test2 = np.array([[-3, -2, -1, 0, 1, 2, 3], [-30, -20, -10, 0, 10, 20, 30]])
+    print(x_test2.ndim)
 
-    # Teste Ridge
-    teste_ridge = polynomial_regression(degree=grau, model_choice='ridge', intercept=True, lam=0.1)
-    teste_ridge.train(x_teste, y_ruido)
-    print(f"Coeficientes Ridge: {teste_ridge.model_intercept:.3f} e {teste_ridge.coef}")
+    # Test OLS
+    test_ols = polynomial_regression(degree=deg, model_choice='ols', intercept=True)
+    test_ols.train(x_test, y_noise)
+    print(f"OLS: {test_ols.model_intercept:.3f} and {test_ols.coef}")
 
-    # Teste Lasso
-    teste_lasso = polynomial_regression(degree=grau, model_choice='lasso', intercept=True, lam=0.1)
-    teste_lasso.train(x_teste, y_ruido)
-    print(f"Coeficientes Lasso: {teste_lasso.model_intercept:.3f} e {teste_lasso.coef}")
+    # Test Ridge
+    test_ridge = polynomial_regression(degree=deg, model_choice='ridge', intercept=True, lam=0.1)
+    test_ridge.train(x_test, y_noise)
+    print(f"Ridge: {test_ridge.model_intercept:.3f} and {test_ridge.coef}")
+
+    # Test Lasso
+    test_lasso = polynomial_regression(degree=deg, model_choice='lasso', intercept=True, lam=0.1)
+    test_lasso.train(x_test, y_noise)
+    print(f"Lasso: {test_lasso.model_intercept:.3f} and {test_lasso.coef}")
+
+    # Test exceptions
+    try:
+        test_ols.train(x_test2, y_noise)
+    except ValueError as V:
+        print(f"Exception: {V}")
