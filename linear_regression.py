@@ -369,7 +369,7 @@ class lasso(_linear_regression):
             raise TypeError(f"Invalid data type: Expected intercept flag (intercept) to have a bool data type, got '{type(intercept).__name__}'")
 
         if not isinstance(eps, float):
-            raise TypeError(f"Invalid data type: Expected epslon convergence parameter (eps) to have a float data type, got '{type(eps).__name__}'")
+            raise TypeError(f"Invalid data type: Expected epsilon convergence parameter (eps) to have a float data type, got '{type(eps).__name__}'")
 
         if not isinstance(max_iter, int):
             raise TypeError(f"Invalid data type: Expected maximum of iterations convergence parameter (max_iter) to have a int data type, got '{type(max_iter).__name__}'")
@@ -378,7 +378,7 @@ class lasso(_linear_regression):
             raise ValueError("Invalid value for (lam): Lambda hyperparameter (lam) must be a non-negative value.")
 
         if(eps<0):
-            raise ValueError("Invalid value for (eps): Epslon convergence parameter (eps) must be a non-negative value.")
+            raise ValueError("Invalid value for (eps): Epsilon convergence parameter (eps) must be a non-negative value.")
 
         if(max_iter<=0):
             raise ValueError("Invalid value for (max_iter): Maximum of iterations convergence parameter (max_iter) must be a positive value.")
