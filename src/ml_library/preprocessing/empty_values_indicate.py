@@ -26,6 +26,11 @@ def empty_values_indicate(
     else:
         raise ValueError("'count' need to be a interger bigger than 0")
 
+    # Validate columns
+    for column in columns:
+        if not column in set(data.columns):
+            raise ValueError(f"'{column}' column does not exist on dataframe")
+
     df = data.copy()
 
     if columns == ():
