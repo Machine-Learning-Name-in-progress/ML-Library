@@ -32,7 +32,7 @@ def empty_values_input(
 
         for column in columns:
             column_mean = df[columns].mean()
-            df[column].fillna(column_mean)
+            df[column] = df[column].fillna(column_mean)
 
         return df
 
@@ -42,7 +42,7 @@ def empty_values_input(
 
         for column in columns:
             column_median = df[columns].meadian()
-            df[column].fillna(column_median)
+            df[column] = df[column].fillna(column_median)
 
         return df
 
