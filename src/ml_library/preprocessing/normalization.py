@@ -18,21 +18,19 @@ def normalization(data: pd.DataFrame, columns: list[str] = ()) -> pd.DataFrame:
       (pd.DataFrame) with normalized columns
     """
 
+    df = data.copy()
+
     if columns == ():
         columns = list(df.select_dtypes(include="number"))
     else:
         for column in columns:
             if column not in set(data.columns):
                 raise ValueError(f"'{column}' column does not exist on dataframe")
-                return None
 
             if df[[column]].select_dtypes(include="number").empty:
                 raise TypeError(
                     f"{column} is not a numerical column and cannot be normalized"
                 )
-                return None
-
-    df = data.copy()
 
     for j in columns:
         ij_max = df[j].max()

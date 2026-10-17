@@ -1,12 +1,8 @@
 import pandas as pd
 
-# TODO: Error treatments:
-#   - Verify the existance of provided column
-#   - Analyze and validate the parameters
-
 
 def one_hot(
-    data: pd.DataFrame, drop: bool = False, columns: list[str] = []
+    data: pd.DataFrame, drop: bool = False, columns: list[str] = ()
 ) -> pd.DataFrame:
     """
     Applies one-hot encoding for class variables, creating binary-columns for each class
@@ -25,17 +21,23 @@ def one_hot(
 
     df = data.copy()
 
-    if columns == []:
+    if columns == ():
         columns = list(df.select_dtypes(include=["object", "category"]))
+
+        if not columns:
+            raise ValueError("No categorical columns found to encoded")
+            return None
 
     # TODO: implement solution for "no cathegorical column" case
 
     for col in columns:
-        classes = list(df[col].unique())
-        for classi in classes:
-            df[f"{col}_{classi}"] = (df[col] == classi).astype(int)
+        if df[[col]].select_dtypes(include=["object", "category"]).empty:
+            print(f"{col} is not a categorical column, and cannot be encoded.")
+            classes = list(df[col].unique())
+            for classi in classes:
+                df[f"{col}_{classi}_onehot"] = (df[col] == classi).astype(int)
 
-        if drop:
-            df.drop(columns=[col], inplace=True)
+                if drop:
+                    df.drop(columns=[col], inplace=True)
 
     return df
