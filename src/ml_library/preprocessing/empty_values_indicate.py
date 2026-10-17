@@ -4,7 +4,7 @@ import pandas as pd
 
 
 def empty_values_indicate(
-    data: pd.DataFrame, columns: list[str] = [], count: int = 1
+    data: pd.DataFrame, columns: list[str] = (), count: int = 1
 ) -> pd.DataFrame:
     """
     Create a new binary (0 or 1) column representing if the row have atleast some
@@ -20,9 +20,15 @@ def empty_values_indicate(
       (pd.DataFrame): the original DataFrame with one more binary column.
     """
 
+    # Validate count value
+    if isinstance(count, int) and count > 0:
+        pass
+    else:
+        raise ValueError("'count' need to be a interger bigger than 0")
+
     df = data.copy()
 
-    if columns == []:
+    if columns == ():
         columns = list(df.columns)
 
     df[f"{columns}_{count}-empty_indicator"] = df[columns].isnull().sum(axis=1) >= count
