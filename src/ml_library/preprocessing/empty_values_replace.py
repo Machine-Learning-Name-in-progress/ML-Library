@@ -4,7 +4,7 @@ import pandas as pd
 
 
 def empty_values_replace(
-    data: pd.DataFrame, method: str, columns: list[str] = (), input: any = None
+    data: pd.DataFrame, method: str, columns: list[str] = (), input: any | None = None
 ) -> pd.DataFrame:
     """
     Replaces empty values by a specific value in columns of the dataframe.

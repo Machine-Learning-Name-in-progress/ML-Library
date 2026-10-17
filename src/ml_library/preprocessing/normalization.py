@@ -37,7 +37,7 @@ def normalization(data: pd.DataFrame, columns: list[str] = ()) -> pd.DataFrame:
         ij_min = df[j].min()
 
         # Treatment for ZeroDivision
-        if not ij_max == ij_min:
+        if ij_max != ij_min:
             df[j] = (df[j] - ij_min) / (ij_max - ij_min)
         else:
             print(f"Max and min of {j} are equal -> {j} have only constant values")

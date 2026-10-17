@@ -34,7 +34,7 @@ def standardization(data: pd.DataFrame, columns: list[str] = ()) -> pd.DataFrame
         j_mean = df[j].mean()
         j_std = df[j].std()
 
-        if not j_std == 0:
+        if j_std != 0:
             df[j] = (df[j] - j_mean) / j_std
         else:
             print(f"{j} column have variance = 0 -> all values are constants")
