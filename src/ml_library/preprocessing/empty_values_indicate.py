@@ -18,6 +18,7 @@ def empty_values_indicate(
       columns (list[str]): Columns that will be analyzed. If empty, will analyze
                            all columns
       count (int): minimum empty values to consider the binary column as 1
+      indicator_name (str): Optional name for indicator column
 
     Return:
       (pd.DataFrame): the original DataFrame with one more binary column.
