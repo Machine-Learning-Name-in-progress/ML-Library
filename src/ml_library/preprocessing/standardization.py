@@ -1,11 +1,9 @@
 import pandas as pd
 
-# TODO: error treatment
 
-
-def standardization(data: pd.DataFrame, columns: list[str] = []) -> pd.DataFrame:
+def standardization(data: pd.DataFrame, columns: list[str] = ()) -> pd.DataFrame:
     """
-    Apply a standardization on all numerical features of the data, using the expression:
+    Apply a z-score standardization on all numerical features of the data, using the expression:
     z_ij = (x_ij - mean_j) / std_j
     For i-th value of the j-th feature
 
@@ -20,13 +18,27 @@ def standardization(data: pd.DataFrame, columns: list[str] = []) -> pd.DataFrame
 
     df = data.copy()
 
-    if columns == []:
+    if columns == ():
         columns = list(df.select_dtypes(include="number"))
+    else:
+        for column in columns:
+            if column not in set(data.columns):
+                raise ValueError(f"'{column}' column does not exist on dataframe")
+
+            if df[[column]].select_dtypes(include="number").empty:
+                raise TypeError(
+                    f"{column} is not a numerical column and cannot be normalized"
+                )
 
     for j in columns:
         j_mean = df[j].mean()
         j_std = df[j].std()
 
-        df[j] = (df[j] - j_mean) / j_std
+        if not j_std == 0:
+            df[j] = (df[j] - j_mean) / j_std
+        else:
+            print(f"{j} column have variance = 0 -> all values are constants")
+            print(f"{j} column is defined equals 0")
+            df[j] = 0
 
     return df
