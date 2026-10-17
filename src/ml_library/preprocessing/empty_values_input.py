@@ -41,7 +41,7 @@ def empty_values_input(
             columns = list(df.select_dtypes(include="number"))
 
         for column in columns:
-            column_median = df[column].meadian()
+            column_median = df[column].median()
             df[column] = df[column].fillna(column_median)
 
         return df
