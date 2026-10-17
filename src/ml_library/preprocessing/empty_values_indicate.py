@@ -4,7 +4,10 @@ import pandas as pd
 
 
 def empty_values_indicate(
-    data: pd.DataFrame, columns: list[str] = (), count: int = 1
+    data: pd.DataFrame,
+    columns: list[str] = (),
+    count: int = 1,
+    indicator_name: str = "",
 ) -> pd.DataFrame:
     """
     Create a new binary (0 or 1) column representing if the row have atleast some
@@ -12,7 +15,7 @@ def empty_values_indicate(
 
     Args:
       data (pd.DataFrame): Dataframe that will be used
-      columns (list[str]): columns that will be analyzed. If empty, will analyze
+      columns (list[str]): Columns that will be analyzed. If empty, will analyze
                            all columns
       count (int): minimum empty values to consider the binary column as 1
 
@@ -36,6 +39,9 @@ def empty_values_indicate(
     if columns == ():
         columns = list(df.columns)
 
-    df[f"{columns}_{count}-empty_indicator"] = df[columns].isnull().sum(axis=1) >= count
+    if indicator_name == "":
+        indicator_name = f"{columns}-{count}"  # Standard name
+
+    df[f"{indicator_name}-empty_indicator"] = df[columns].isnull().sum(axis=1) >= count
 
     return df
