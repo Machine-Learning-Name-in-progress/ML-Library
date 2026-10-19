@@ -5,8 +5,19 @@ from ast import Continue
 import numpy as np
 
 
-def bootstrap_sample(X, y, seed=None):
-    """Generate bootstrap samples."""
+def bootstrap_sample(X, y, seed=None):  # google standart docsring
+    """
+    Generate bootstrap samples.
+
+    Parameters:
+    X (array-like): The input features.
+    y (array-like): The target values.
+    seed (int, optional): The seed for the random number generator.
+
+    Returns:
+    X_sample (array-like): The bootstrap samples of X.
+    y_sample (array-like): The bootstrap samples of y.
+    """
     if seed:
         np.random.seed(seed)
     N = X.shape[0]
@@ -17,7 +28,20 @@ def bootstrap_sample(X, y, seed=None):
 
 
 def bootstrap_ci(model, X, y, n_bootstraps=1000, alpha=0.05, seed=None):
-    """Generate bootstrap confidence intervals."""
+    """
+    Generate bootstrap confidence intervals.
+
+    Parameters:
+    model (object): The model to use.
+    X (array-like): The input features.
+    y (array-like): The target values.
+    n_bootstraps (int, optional): The number of bootstrap samples.
+    alpha (float, optional): The significance level.
+    seed (int, optional): The seed for the random number generator.
+
+    Returns:
+    dict: A dictionary containing the standard error and confidence interval.
+    """
     if seed:
         np.random.seed(seed)
 

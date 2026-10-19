@@ -36,11 +36,11 @@ def test_bootstrap_sample_duplicates(sample_data):
     # arrange
     X, y = sample_data
     # act
-    X_boot, y_boot = bootstrap_sample(X, y)
+    X_boot, y_boot = bootstrap_sample(X, y, seed=42)
 
-    # assert
-    np.testing.assert_(len(X_boot) != len(np.unique(X_boot)))
-    np.testing.assert_(len(y_boot) != len(np.unique(y_boot)))
+    # assert (deterministic)
+    np.testing.assert_(len(X_boot) > len(np.unique(X_boot, axis=0)))
+    np.testing.assert_(len(y_boot) > len(np.unique(y_boot)))
 
 
 def test_bootstrap_sample_alignment(sample_data):
