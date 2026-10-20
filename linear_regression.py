@@ -14,8 +14,8 @@ class _linear_regression:
         self.intercept = 0
         return
     
-    def train(self):
-        """Abstract method to train the model"""
+    def fit(self):
+        """Abstract method to fit the model"""
         pass
     
     def predict(self, X: np.ndarray) -> np.ndarray:
@@ -102,7 +102,7 @@ class _linear_regression:
     def _exceptions(self, X: np.ndarray, y: np.ndarray) -> None:
         """Private method to log internal exceptions"""
         if(self.coef==[]):
-            raise ValueError("Model is not yet trained, call .train() first.")
+            raise ValueError("Model is not yet fitted, call .fit() first.")
         
         if not np.issubdtype(X.dtype, np.number):
             raise TypeError(f"Invalid data type: Expected feature matrix (X) to have a numeric data type, got '{X.dtype}'")
@@ -126,15 +126,15 @@ class _linear_regression:
 class ordinary_least_squares(_linear_regression):
     """A public class for ordinary least squares linear regression.
 
-    This class inherits the private class _linear_regression and add the train method for ordinary least squares regression.
+    This class inherits the private class _linear_regression and add the fit method for ordinary least squares regression.
     """
-    def train(self, X: np.ndarray, y: np.ndarray, intercept: bool = True) -> None:
-        """Train the ordinary least squares method.
+    def fit(self, X: np.ndarray, y: np.ndarray, intercept: bool = True) -> None:
+        """Fit the ordinary least squares model.
 
         Args:
             X (np.ndarray): The feature matrix.
             y (np.ndarray): The empirical target values.
-            intercept (bool, optional): Decide whether to train the method with an intercept coefficient or not.
+            intercept (bool, optional): Decide whether to fit the model with an intercept coefficient or not.
 
         Returns:
             None
@@ -166,13 +166,13 @@ class ordinary_least_squares(_linear_regression):
     def _ols_exceptions(self, X: np.ndarray, y: np.ndarray, intercept: bool) -> None:
         """Private method to log internal exceptions"""
         if not np.issubdtype(X.dtype, np.number):
-            raise TypeError(f"Invalid data type: Expected feature matrix (X) to have a numeric data type, got '{X.dtype}'")
+            raise TypeError(f"Invalid data type: Expected feature matrix (X) to have a numeric data type, got '{X.dtype}'.")
         
         if not np.issubdtype(y.dtype, np.number):
-            raise TypeError(f"Invalid data type: Expected target vector (y) to have a numeric data type, got '{y.dtype}'")
+            raise TypeError(f"Invalid data type: Expected target vector (y) to have a numeric data type, got '{y.dtype}'.")
 
         if not isinstance(intercept, bool):
-            raise TypeError(f"Invalid data type: Expected intercept flag (intercept) to have a bool data type, got '{type(intercept).__name__}'")
+            raise TypeError(f"Invalid data type: Expected intercept flag (intercept) to have a bool data type, got '{type(intercept).__name__}'.")
         
         if(X.ndim!=2):
             raise ValueError("Expected a 2-D array of shape (n_points, n_features).")
@@ -182,21 +182,29 @@ class ordinary_least_squares(_linear_regression):
         
         if(X.shape[0]!=y.shape[0]):
             raise ValueError("Dimension mismatch: The number of rows in feature matrix (X) must equal the number of samples in the target vector (y).")
+        
+        X_aux = X
+        if(intercept):
+            ones_column = np.ones((X_aux.shape[0],1))
+            X_aux = np.hstack((ones_column, X_aux))
+        
+        if(np.linalg.matrix_rank(X_aux)!=X_aux.shape[1]):
+            raise ValueError("Normal equations not solvable: The design matrix must have full column rank.")
         return
 
 class ridge(_linear_regression):
     """A public class for ridge linear regression.
 
-    This class inherits the private class _linear_regression and add the train method for ridge regression.
+    This class inherits the private class _linear_regression and add the fit method for ridge regression.
     """
-    def train(self, X: np.ndarray, y: np.ndarray, lam: float, intercept: bool = True) -> None:
-        """Train the ridge method.
+    def fit(self, X: np.ndarray, y: np.ndarray, lam: float, intercept: bool = True) -> None:
+        """Fit the ridge model.
 
         Args:
             X (np.ndarray): The feature matrix.
             y (np.ndarray): The empirical target values.
             lam (float): Regularization ridge hyperparameter. Should be a positive value. Higher values force the slope coefficients closer to 0.
-            intercept (bool, optional): Decide whether to train the method with an intercept coefficient or not.
+            intercept (bool, optional): Decide whether to fit the model with an intercept coefficient or not.
 
         Returns:
             None
@@ -242,16 +250,16 @@ class ridge(_linear_regression):
     def _ridge_exceptions(self, X: np.ndarray, y: np.ndarray, lam: float, intercept: bool) -> None:
         """Private method to log internal exceptions"""
         if not np.issubdtype(X.dtype, np.number):
-            raise TypeError(f"Invalid data type: Expected feature matrix (X) to have a numeric data type, got '{X.dtype}'")
+            raise TypeError(f"Invalid data type: Expected feature matrix (X) to have a numeric data type, got '{X.dtype}'.")
         
         if not np.issubdtype(y.dtype, np.number):
-            raise TypeError(f"Invalid data type: Expected target vector (y) to have a numeric data type, got '{y.dtype}'")
+            raise TypeError(f"Invalid data type: Expected target vector (y) to have a numeric data type, got '{y.dtype}'.")
 
         if not isinstance(lam, float):
-            raise TypeError(f"Invalid data type: Expected lambda hyperparameter (lam) to have a float data type, got '{type(lam).__name__}'")
+            raise TypeError(f"Invalid data type: Expected lambda hyperparameter (lam) to have a float data type, got '{type(lam).__name__}'.")
 
         if not isinstance(intercept, bool):
-            raise TypeError(f"Invalid data type: Expected intercept flag (intercept) to have a bool data type, got '{type(intercept).__name__}'")
+            raise TypeError(f"Invalid data type: Expected intercept flag (intercept) to have a bool data type, got '{type(intercept).__name__}'.")
 
         if(lam<0):
             raise ValueError("Invalid value for (lam): Lambda hyperparameter (lam) must be a non-negative value.")
@@ -269,16 +277,16 @@ class ridge(_linear_regression):
 class lasso(_linear_regression):
     """A public class for lasso linear regression.
 
-    This class inherits the private class _linear_regression and add the train method for lasso regression.
+    This class inherits the private class _linear_regression and add the fit method for lasso regression.
     """
-    def train(self, X: np.ndarray, y: np.ndarray, lam: float, intercept: bool = True, eps: float = 1e-4, max_iter: int = 1e4) -> None:
-        """Train the lasso method.
+    def fit(self, X: np.ndarray, y: np.ndarray, lam: float, intercept: bool = True, eps: float = 1e-4, max_iter: int = 1e4) -> None:
+        """Fit the lasso model.
         
         Args:
             X (np.ndarray): The feature matrix.
             y (np.ndarray): The empirical target values.
             lam (float): Regularization lasso hyperparameter. Should be a positive value. Higher values force the slope coefficients closer to 0.
-            intercept (bool, optional): Decide whether to train the method with an intercept coefficient or not.
+            intercept (bool, optional): Decide whether to fit the model with an intercept coefficient or not.
             eps: (float, optional): Specify a convergence tolerance for the coordinate descent method.
             max_iter: (int, optional): The maximum number of iterations in the coordinate descent method to avoid infinity loops.
 
@@ -357,22 +365,22 @@ class lasso(_linear_regression):
     def _lasso_exceptions(self, X: np.ndarray, y: np.ndarray, lam: float, intercept: bool, eps: float, max_iter: int) -> None:
         """Private method to log internal exceptions"""
         if not np.issubdtype(X.dtype, np.number):
-            raise TypeError(f"Invalid data type: Expected feature matrix (X) to have a numeric data type, got '{X.dtype}'")
+            raise TypeError(f"Invalid data type: Expected feature matrix (X) to have a numeric data type, got '{X.dtype}'.")
         
         if not np.issubdtype(y.dtype, np.number):
-            raise TypeError(f"Invalid data type: Expected target vector (y) to have a numeric data type, got '{y.dtype}'")
+            raise TypeError(f"Invalid data type: Expected target vector (y) to have a numeric data type, got '{y.dtype}'.")
 
         if not isinstance(lam, float):
-            raise TypeError(f"Invalid data type: Expected lambda hyperparameter (lam) to have a float data type, got '{type(lam).__name__}'")
+            raise TypeError(f"Invalid data type: Expected lambda hyperparameter (lam) to have a float data type, got '{type(lam).__name__}'.")
 
         if not isinstance(intercept, bool):
-            raise TypeError(f"Invalid data type: Expected intercept flag (intercept) to have a bool data type, got '{type(intercept).__name__}'")
+            raise TypeError(f"Invalid data type: Expected intercept flag (intercept) to have a bool data type, got '{type(intercept).__name__}'.")
 
         if not isinstance(eps, float):
-            raise TypeError(f"Invalid data type: Expected epsilon convergence parameter (eps) to have a float data type, got '{type(eps).__name__}'")
+            raise TypeError(f"Invalid data type: Expected epsilon convergence parameter (eps) to have a float data type, got '{type(eps).__name__}'.")
 
         if not isinstance(max_iter, int):
-            raise TypeError(f"Invalid data type: Expected maximum of iterations convergence parameter (max_iter) to have a int data type, got '{type(max_iter).__name__}'")
+            raise TypeError(f"Invalid data type: Expected maximum of iterations convergence parameter (max_iter) to have a int data type, got '{type(max_iter).__name__}'.")
 
         if(lam<0):
             raise ValueError("Invalid value for (lam): Lambda hyperparameter (lam) must be a non-negative value.")

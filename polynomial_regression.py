@@ -76,16 +76,16 @@ class polynomial_regression:
         X = np.array([[val_xi**d for d in range(1, self.degree + 1)] for val_xi in x])
         return X
         
-    def train(self, x: np.ndarray, y: np.ndarray) -> None:
+    def fit(self, x: np.ndarray, y: np.ndarray) -> None:
         self._exceptions_data(x, y)
         X = self._build_design(x)
 
         if self.model_choice == 'ols':
-            self.model.train(X, y, intercept=self.has_intercept)
+            self.model.fit(X, y, intercept=self.has_intercept)
         elif self.model_choice == 'ridge':
-            self.model.train(X, y, intercept=self.has_intercept, lam=self.lam)
+            self.model.fit(X, y, intercept=self.has_intercept, lam=self.lam)
         else:
-            self.model.train(X, y, intercept=self.has_intercept, lam=self.lam, eps=self.eps, max_iter=self.max_iter)
+            self.model.fit(X, y, intercept=self.has_intercept, lam=self.lam, eps=self.eps, max_iter=self.max_iter)
 
         self.coef = self.model.coef
         self.model_intercept = self.model.intercept
@@ -127,21 +127,21 @@ if __name__ == "__main__":
 
     # Test OLS
     test_ols = polynomial_regression(degree=deg, model_choice='ols', intercept=True)
-    test_ols.train(x_test, y_noise)
+    test_ols.fit(x_test, y_noise)
     print(f"OLS: {test_ols.model_intercept:.3f} and {test_ols.coef}")
 
     # Test Ridge
     test_ridge = polynomial_regression(degree=deg, model_choice='ridge', intercept=True, lam=0.1)
-    test_ridge.train(x_test, y_noise)
+    test_ridge.fit(x_test, y_noise)
     print(f"Ridge: {test_ridge.model_intercept:.3f} and {test_ridge.coef}")
 
     # Test Lasso
     test_lasso = polynomial_regression(degree=deg, model_choice='lasso', intercept=True, lam=0.1)
-    test_lasso.train(x_test, y_noise)
+    test_lasso.fit(x_test, y_noise)
     print(f"Lasso: {test_lasso.model_intercept:.3f} and {test_lasso.coef}")
 
     # Test exceptions
     try:
-        test_ols.train(x_test2, y_noise)
+        test_ols.fit(x_test2, y_noise)
     except ValueError as V:
         print(f"Exception: {V}")
