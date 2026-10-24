@@ -34,7 +34,7 @@ def normalization(data: pd.DataFrame, columns: list[str] = ()) -> pd.DataFrame:
         ij_min = df[j].min()
 
         # Treatment for ZeroDivision
-        if not ij_max == ij_min:
+        if ij_max != ij_min:
             df[j] = (df[j] - ij_min) / (ij_max - ij_min)
         else:
             print(f"{j} have no variance, so all values are set on 0")
