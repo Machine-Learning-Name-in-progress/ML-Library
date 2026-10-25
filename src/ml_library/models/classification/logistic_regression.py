@@ -8,12 +8,20 @@ class logistic_regression:
         self, learn_rate: float = 0.1, max_iter: int = 1000, tol: float = 1e-6
     ):
 
-        if not isinstance(learn_rate, (int, float)) or learn_rate <= 0:
-            raise TypeError("'learn_rate' must be a float number greater than 0")
-        elif not isinstance(max_iter, int) or max_iter <= 0:
-            raise TypeError("'max_iter' must be a integer greater than 0")
-        elif not isinstance(tol, float) or tol <= 0:
-            raise TypeError("'tol' must be a float number greater than 0")
+        if not isinstance(learn_rate, (int, float)):
+            raise TypeError("'learn_rate' must be a number")
+        if learn_rate <= 0:
+            raise ValueError("'learn_rate' must be greater than 0")
+
+        if not isinstance(max_iter, int):
+            raise TypeError("'max_iter' must be an integer")
+        if max_iter <= 0:
+            raise ValueError("'max_iter' must be greater than 0")
+
+        if not isinstance(tol, (int, float)):
+            raise TypeError("'tol' must be a number")
+        if tol <= 0:
+            raise ValueError("'tol' must be greater than 0")
 
         self._beta = None
         self._learn_rate = learn_rate
@@ -55,7 +63,7 @@ class logistic_regression:
 
         beta = np.zeros(p)
 
-        for i in range(self._max_iter):
+        for _ in range(self._max_iter):
             z = x @ beta
             prob = self._sigmoid(z)
             error = y - prob
@@ -74,3 +82,12 @@ class logistic_regression:
             )
 
         self._beta = beta
+
+    def predict(self, x):
+        probs = self.predict_prob(x)
+
+        prediction = probs > 0.5
+
+        prediction = prediction.astype(int)
+
+        return prediction
