@@ -3,7 +3,7 @@ import pandas as pd
 
 def empty_values_replace(
     data: pd.DataFrame, method: str, columns: list[str] = (), fill_value=None
-) -> pd.DataFrame:
+) -> tuple[pd.DataFrame, dict]:
     """
     Replaces empty values by a specific value in columns of the dataframe.
 
@@ -22,11 +22,13 @@ def empty_values_replace(
                         empty values
 
     Returns:
-        (pd.DataFrame): new dataframe with replaced values
+        tuple[pd.DataFrame, dict]: A copy of the DataFrame with empty values replaced,
+                                   and a dict mapping each processed column to the value
+                                   used to fill it.
 
     """
 
-    # We need specifically a list, then convert if a tuple are given
+    # We need specifically a list, then convert if a tuple is given
     columns = list(columns)
 
     # Validate method
@@ -43,19 +45,26 @@ def empty_values_replace(
 
     # Method "mean"
     if method in [0, "mean"]:
-        # If no columns is given, consider all numerical columns
+        # If no columns are given, consider all numerical columns
         if not columns:
             columns = list(df.select_dtypes(include="number"))
         # Select only numerical columns from given list
         else:
             columns = list(df[columns].select_dtypes(include="number").columns)
 
-        # Compute the mean and fill
+        means = {}  # Empty dict to save means
+
+        # Compute the mean, save and fill (essential for model tests)
+
         for column in columns:
             column_mean = df[column].mean()
+
+            # Save on dict
+            means[column] = column_mean
+
             df[column] = df[column].fillna(column_mean)
 
-        return df
+        return df, means
 
     # Method "median"
     elif method in [1, "median"]:
@@ -66,12 +75,18 @@ def empty_values_replace(
         else:
             columns = list(df[columns].select_dtypes(include="number").columns)
 
-        # Find the median and fill
+        medians = {}  # Empty dict to save medians
+
+        # find the median, save and fill (essential for model tests)
         for column in columns:
             column_median = df[column].median()
+
+            # Save on dict
+            medians[column] = column_median
+
             df[column] = df[column].fillna(column_median)
 
-        return df
+        return df, medians
 
     # Method "fill"
     elif method in [2, "fill"]:
@@ -85,8 +100,11 @@ def empty_values_replace(
         if not columns:
             columns = list(df.columns)
 
+        fill_values = {}
+
         # Fill NaN values with fill_value
         for column in columns:
             df[column] = df[column].fillna(fill_value)
+            fill_values[column] = fill_value
 
-        return df
+        return df, fill_values
