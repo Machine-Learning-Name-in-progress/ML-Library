@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 
 
@@ -27,9 +29,48 @@ class logistic_regression:
         return 1 / (1 + np.exp(-z))
 
     def predict_prob(self, x):
+        if self._beta is None:
+            raise ValueError("Cannot predict prob without training")
+
         x = np.asarray(x)
         x = self._add_ones_column(x)
 
         z = x @ self._beta
 
         return self._sigmoid(z)
+
+    def train(self, x, y):
+        x = np.asarray(x)
+        y = np.asarray(y)
+
+        if False in ((y == 0) | (y == 1)):
+            raise ValueError("Logistic regression only works with two classes 0/1")
+        if x.shape[0] != y.shape[0]:
+            raise ValueError(
+                "Each point from x needs a result in y: same number of rows"
+            )
+
+        x = self._add_ones_column(x)
+        N, p = x.shape
+
+        beta = np.zeros(p)
+
+        for i in range(self._max_iter):
+            z = x @ beta
+            prob = self._sigmoid(z)
+            error = y - prob
+
+            gradient = (np.transpose(x) @ error) / N
+            step = self._learn_rate * gradient
+
+            beta = beta + step
+
+            if np.linalg.norm(step) < self._tol:
+                break
+        else:
+            warnings.warn(
+                f"Did not converge in max_iter = {self._max_iter} iterations",
+                RuntimeWarning,
+            )
+
+        self._beta = beta
