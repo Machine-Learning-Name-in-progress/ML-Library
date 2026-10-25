@@ -18,7 +18,7 @@ def standardization(data: pd.DataFrame, columns: list[str] = ()) -> pd.DataFrame
 
     df = data.copy()
 
-    if columns == ():
+    if not columns:
         columns = list(df.select_dtypes(include="number"))
     else:
         for column in columns:
@@ -27,7 +27,7 @@ def standardization(data: pd.DataFrame, columns: list[str] = ()) -> pd.DataFrame
 
             if df[[column]].select_dtypes(include="number").empty:
                 raise TypeError(
-                    f"{column} is not a numerical column and cannot be normalized"
+                    f"{column} is not a numerical column and cannot be standardized"
                 )
 
     for j in columns:
