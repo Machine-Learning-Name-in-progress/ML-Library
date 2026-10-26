@@ -8,8 +8,8 @@ def empty_values_indicate(
     indicator_name: str = "",
 ) -> pd.DataFrame:
     """
-    Create a new binary (0 or 1) column representing if the row have atleast some
-    quantity of NaN values, returning 1 if the row have, and 0 if not.
+    Create a new binary (0 or 1) column representing if the row has at least some
+    quantity of NaN values, returning 1 if the row has, and 0 if not.
 
     Args:
       data (pd.DataFrame): Dataframe that will be used
@@ -19,7 +19,7 @@ def empty_values_indicate(
       indicator_name (str): Optional name for indicator column. The standard name is "indicate".
                             Need to be a name different from all other columns name.
 
-    Return:
+    Returns:
       (pd.DataFrame): a copy of the original DataFrame with one additional binary column.
     """
 
@@ -35,7 +35,7 @@ def empty_values_indicate(
 
     # Validate columns (existing)
     for column in columns:
-        if column not in set(data.columns):
+        if column not in data.columns:
             raise ValueError(f"'{column}' column does not exist on dataframe")
 
     if indicator_name == "":
