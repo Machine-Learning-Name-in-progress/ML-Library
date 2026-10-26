@@ -1,9 +1,7 @@
 import numpy as np
 
-# TODO: Functions organization
 
-
-class knn:
+class KNN:
     """
     K-Nearest Neighbors (KNN) classification method
 
@@ -20,10 +18,10 @@ class knn:
             raise ValueError("K must be an integer greater than 0")
 
         self._k = int(k)  # Hyperparameter K
-        self._x_train = None  # Can be set using train()
-        self._y_train = None  # Can be set using train()
+        self._x_train = None  # Can be set using fit()
+        self._y_train = None  # Can be set using fit()
 
-    def train(self, x: np.ndarray, y: np.ndarray) -> None:
+    def fit(self, x: np.ndarray, y: np.ndarray) -> None:
         """
         Train the model using the training datasets
 
@@ -32,30 +30,31 @@ class knn:
             y (np.ndarray): Classifications vector with shape (n_samples)
         """
 
+        # Dimension validate
+        if x.shape[0] != y.shape[0]:
+            raise ValueError(
+                f"x has {x.shape[0]} samples while y has {y.shape[0]}. Both need to be equal"
+            )
+
         # Number of points validation
         if len(x) < self._k:
             raise ValueError(
                 f"KNN model needs at least K = {self._k} points to work ({len(x)} passed)"
             )
 
-        self._x_train = np.asarray(x)  # Preditors
-        self._y_train = np.asarray(y)  # Categories
+        self._x_train = x  # Preditors
+        self._y_train = y  # Categories
 
-    def predict(self, x_new: np.ndarray) -> str:
+    def _predict_point(self, x_new: np.ndarray):
         """
         Predict a classification for a new data point
 
         Args:
-            x_new (np.ndarray): New point to classify with shape (1, n_features)
+            x_new (np.ndarray): New point to classify with shape (n_features)
 
         Returns:
-            str: Predicted classification for the new point
+            Predicted classification for the new point
         """
-
-        # Validate dimensions of x_new
-        x_new = np.asarray(x_new)
-        if x_new.ndim > 1 and len(x_new) > 1:
-            return self.predictions(x_new)
 
         # Compute k-nearest distances
         distances = [np.linalg.norm(x_new - x_train) for x_train in self._x_train]
@@ -75,18 +74,23 @@ class knn:
 
         return classification
 
-    def predictions(self, x_new: np.ndarray) -> np.ndarray:
+    def predict(self, x_new: np.ndarray) -> np.ndarray:
         """
-        Predict the classification for many new points
+        Predict the classification of each new point using K nearest neighbors method.
+        If two or more classes receive the same number of votes, the smallest label
+        is chosen.
 
         Args:
-            x_new (np.ndarray): New point to classify with shape (n_new_samples, n_features)
+            x_new (np.ndarray): New points to classify with shape (n_new_samples, n_features)
 
         Returns:
             np.ndarray: New array of classifications with shape (n_new_samples)
         """
 
-        predictions = [self.predict(point) for point in x_new]
+        if (self._x_train is None) or (self._y_train is None):
+            raise ValueError("Cannot predict before training. Use '.fit()' first")
+
+        predictions = [self._predict_point(sample) for sample in x_new]
 
         return np.array(predictions)
 
@@ -116,4 +120,4 @@ class knn:
 
         # Re-train only if the model was already trained
         if self._x_train is not None:
-            self.train(self._x_train, self._y_train)
+            self.fit(self._x_train, self._y_train)
