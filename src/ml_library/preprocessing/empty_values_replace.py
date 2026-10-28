@@ -2,24 +2,26 @@ import pandas as pd
 
 
 def empty_values_replace(
-    data: pd.DataFrame, method: str, columns: list[str] = (), fill_value=None
+    data: pd.DataFrame, method: str | int, columns: list[str] = (), fill_value=None
 ) -> tuple[pd.DataFrame, dict]:
     """
     Replaces empty values by a specific value in columns of the dataframe.
 
     Args:
-      data (pd.DataFrame): Pandas DataFrame where will be replaced empty values
+      data (pd.DataFrame): Pandas DataFrame whose empty values will be replaced.
 
       method {0 or "mean", 1 or "median", 2 or "fill"}: defines the replace method:
           - 0 or "mean": will replace empty values by column mean (numerical only)
           - 1 or "median": will replace empty values by column median (numerical only)
           - 2 or "fill": will replace empty values by provided "fill_value" parameter
 
-      columns (list[str]):  columns where will be replaced. If empty, all columns
+      columns (list[str]):  columns where NaN values will be replaced. If empty, all columns
                             will be replaced. If "mean" or "median" method is provided,
                             only numerical columns will be replaced.
       fill_value (any): Required when method is "fill". Value that will replace
-                        empty values
+                        empty values. Must be compatible with the type of every
+                        selected column, so give "columns" when the DataFrame mixes
+                        numerical and text columns
 
     Returns:
         tuple[pd.DataFrame, dict]: A copy of the DataFrame with empty values replaced,
