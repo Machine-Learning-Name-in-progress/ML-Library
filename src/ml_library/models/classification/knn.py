@@ -12,7 +12,9 @@ class KNN:
     def __init__(self, k: int) -> None:
 
         # K validation: K negative or not int parameter
-        if not isinstance(k, int) and not (isinstance(k, float) and k.is_integer()):
+        if not isinstance(k, (int, np.integer)) and not (
+            isinstance(k, float) and k.is_integer()
+        ):
             raise TypeError("K must be an integer")
         elif k < 1:
             raise ValueError("K must be an integer greater than 0")
@@ -30,6 +32,10 @@ class KNN:
             y (np.ndarray): Classifications vector with shape (n_samples)
         """
 
+        # Convert lists, DataFrames and Series to NumPy arrays
+        x = np.asarray(x)
+        y = np.asarray(y)
+
         # Dimension validate
         if x.shape[0] != y.shape[0]:
             raise ValueError(
@@ -42,7 +48,7 @@ class KNN:
                 f"KNN model needs at least K = {self._k} points to work ({len(x)} passed)"
             )
 
-        self._x_train = x  # Preditors
+        self._x_train = x  # Predictors
         self._y_train = y  # Categories
 
     def _predict_point(self, x_new: np.ndarray):
@@ -68,7 +74,7 @@ class KNN:
         # The classes and counts of the nearest points
         classes, counts = np.unique(nearest_categories, return_counts=True)
 
-        # Choose the most frequently classification
+        # Choose the most frequent classification
         biggest_index = np.argmax(counts)
         classification = classes[biggest_index]
 
@@ -90,6 +96,9 @@ class KNN:
         if (self._x_train is None) or (self._y_train is None):
             raise ValueError("Cannot predict before training. Use '.fit()' first")
 
+        # Convert lists and DataFrames to NumPy arrays (iterate over rows, not columns)
+        x_new = np.asarray(x_new)
+
         predictions = [self._predict_point(sample) for sample in x_new]
 
         return np.array(predictions)
@@ -103,7 +112,7 @@ class KNN:
         """
 
         # K validation: K negative or not int parameter
-        if not isinstance(k_new, int) and not (
+        if not isinstance(k_new, (int, np.integer)) and not (
             isinstance(k_new, float) and k_new.is_integer()
         ):
             raise TypeError("K must be an integer")
