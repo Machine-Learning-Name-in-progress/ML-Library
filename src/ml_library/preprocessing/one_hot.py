@@ -2,17 +2,20 @@ import pandas as pd
 
 
 def one_hot(
-    data: pd.DataFrame, drop: bool = False, columns: list[str] = ()
+    data: pd.DataFrame, columns: list[str] = (), drop: bool = False
 ) -> pd.DataFrame:
     """
-    Applies one-hot encoding for class variables, creating binary-columns for each class
+    Applies one-hot encoding for categorical variables, creating binary columns for
+    each category.
 
     Args:
       data (pd.DataFrame): DataFrame to be encoded
-      drop (bool): False by default. if True, remove the original columns, letting only the new binary columns.
-      columns (list[str]): Columns of classification features that will be encoded. If empty, will encode all categorical columns
+      columns (list[str]): Categorical columns that will be encoded. If empty, will
+                           encode all categorical columns
+      drop (bool): False by default. If True, remove the original columns, keeping
+                   only the new binary columns.
 
-    Return:
+    Returns:
       (pd.DataFrame) DataFrame with new one-hot encoding
     """
 
@@ -21,7 +24,7 @@ def one_hot(
 
     # If no columns are given, consider all categorical columns
     if not columns:
-        columns = list(df.select_dtypes(include=["object", "category"]))
+        columns = list(df.select_dtypes(include=["object", "string", "category"]))
         if not columns:
             raise ValueError("No categorical columns found to be encoded")
 
@@ -34,7 +37,7 @@ def one_hot(
     # For each categorical column...
     for column in columns:
         # Validate current column (is it categorical?)
-        if df[[column]].select_dtypes(include=["object", "category"]).empty:
+        if df[[column]].select_dtypes(include=["object", "string", "category"]).empty:
             raise TypeError(
                 f"{column} is not a categorical column, and cannot be encoded."
             )
@@ -48,6 +51,6 @@ def one_hot(
 
             # Drop the original column if drop == True
             if drop:
-                df.drop(columns=[column], inplace=True)
+                df = df.drop(columns=[column])
 
     return df
