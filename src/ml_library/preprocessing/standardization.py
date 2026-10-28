@@ -1,4 +1,5 @@
-import numpy as np
+import warnings
+
 import pandas as pd
 
 
@@ -8,8 +9,9 @@ def standardization(
     """
     Apply a z-score standardization on all numerical features of the data, using the expression:
     z_ij = (x_ij - mean_j) / std_j
-    For i-th value of the j-th feature.
-    Columns with std close to 0 (tol=1e-12) are treated as constant and set to 0
+    For i-th value of the j-th feature. std_j is the sample standard deviation
+    (divides by n - 1).
+    Constant columns (all values are the same) are set to 0
 
     Args:
       data (pd.DataFrame): Dataframe of the original pre-standard values
@@ -50,12 +52,13 @@ def standardization(
         # Save metrics on dict
         metrics[j] = {"mean": j_mean, "std": j_std}
 
-        # Prevent ZeroDivision and rounding error using tol = 1e-12 tolerance
-        if not np.isclose(j_std, 0, atol=1e-12):
+        # Prevent ZeroDivision Error
+        # compare max and min directly, because the computed std
+        # can have a rounding error and not be exactly 0
+        if df[j].max() != df[j].min():
             df[j] = (df[j] - j_mean) / j_std
         else:
-            print(f"{j} column has variance = 0 -> all values are constants")
-            print(f"{j} column is defined equals 0")
+            warnings.warn(f"{j} column has variance = 0, so all values are set to 0")
             df[j] = 0
 
     return df, metrics
