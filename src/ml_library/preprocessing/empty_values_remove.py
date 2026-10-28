@@ -19,7 +19,6 @@ def empty_values_remove(
     Returns:
         (pd.DataFrame): a new DataFrame without the removed rows, with reset index
     """
-    method = "any" if any_missing else "all"
 
     df = data.copy()
 
@@ -35,6 +34,7 @@ def empty_values_remove(
     if not columns:
         columns = list(df.columns)
 
+    method = "any" if any_missing else "all"
     df = df.dropna(how=method, subset=columns)
 
     # Reset index to 0,1,...
