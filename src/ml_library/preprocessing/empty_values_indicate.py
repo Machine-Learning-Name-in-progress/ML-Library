@@ -12,12 +12,14 @@ def empty_values_indicate(
     quantity of NaN values, returning 1 if the row has, and 0 if not.
 
     Args:
-      data (pd.DataFrame): Dataframe that will be used
+      data (pd.DataFrame): Dataframe to be analyzed
       columns (list[str]): Columns that will be analyzed. If empty, will analyze
                            all columns
-      count (int): minimum count of NaN values to consider the binary column as 1
-      indicator_name (str): Optional name for indicator column. The standard name is "indicate".
-                            Need to be a name different from all other columns name.
+      count (int): minimum count of NaN values to consider the binary column as 1.
+                   Cannot be greater than the number of analyzed columns.
+      indicator_name (str): Optional name for indicator column. The standard name is
+                            "indicate".
+                            Must be different from all existing column names.
 
     Returns:
       (pd.DataFrame): a copy of the original DataFrame with one additional binary column.
@@ -26,12 +28,12 @@ def empty_values_indicate(
     # Create a copy of dataframe to prevent changes on original dataframe
     df = data.copy()
 
-    # Validate count value
-    if not isinstance(count, int) or count <= 0:
-        raise ValueError("'count' needs to be an integer greater than 0")
-
     # Pandas treats tuple as a single key, so normalize to list
     columns = list(columns)
+
+    # Validate count value
+    if not pd.api.types.is_integer(count) or count <= 0:
+        raise ValueError("'count' needs to be an integer greater than 0")
 
     # Validate columns (existing)
     for column in columns:
@@ -50,6 +52,13 @@ def empty_values_indicate(
     # If no column is given, analyze all columns
     if not columns:
         columns = list(df.columns)
+
+    # A row cannot have more NaNs than analyzed columns
+    if count > len(columns):
+        raise ValueError(
+            f"'count' ({count}) cannot be greater than the number of analyzed "
+            f"columns ({len(columns)})"
+        )
 
     # Create a True/False column, considering if the row has at least 'count' NaNs
     df[indicator_name] = df[columns].isnull().sum(axis=1) >= count

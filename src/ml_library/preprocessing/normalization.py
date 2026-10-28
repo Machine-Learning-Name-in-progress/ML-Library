@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 
 
@@ -40,7 +41,7 @@ def normalization(data: pd.DataFrame, columns: list[str] = ()) -> pd.DataFrame:
 
         # Treatment for ZeroDivision:
         # If ij_max == ij_min, the denominator would be zero
-        if ij_max != ij_min:
+        if not np.isclone(ij_max - ij_min, 0, atol=1e-12):
             df[j] = (df[j] - ij_min) / (ij_max - ij_min)
         else:
             # If a column has variance = 0, set all values on 0 by convention
