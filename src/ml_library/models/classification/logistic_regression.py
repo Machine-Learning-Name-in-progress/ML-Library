@@ -27,7 +27,7 @@ class logistic_regression:
             raise ValueError("'learn_rate' must be greater than 0")
 
         # max_iter validate
-        if not isinstance(max_iter, int):
+        if not isinstance(max_iter, (int, np.integer)):
             raise TypeError("'max_iter' must be an integer")
         if max_iter <= 0:
             raise ValueError("'max_iter' must be greater than 0")
@@ -38,7 +38,7 @@ class logistic_regression:
         if tol <= 0:
             raise ValueError("'tol' must be greater than 0")
 
-        self._beta = None  # Can be set using train()
+        self._beta = None  # Can be set using fit()
         self._learn_rate = learn_rate
         self._max_iter = max_iter
         self._tol = tol
@@ -89,7 +89,7 @@ class logistic_regression:
         """
         # Validate training before predict
         if self._beta is None:
-            raise ValueError("Cannot predict prob without training")
+            raise ValueError("Cannot predict before training. Use '.fit()' first")
 
         x = np.asarray(x)
         x = self._add_ones_column(x)
@@ -99,7 +99,7 @@ class logistic_regression:
 
         return self._sigmoid(z)
 
-    def train(self, x_train, y_train):
+    def fit(self, x_train, y_train):
         """
         Estimate the coefficients by maximizing the log-likelihood
 
