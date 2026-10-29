@@ -6,15 +6,15 @@ import numpy as np
 class logistic_regression:
     """
     Logistic regression classification model for two classes (0 and 1), trained by
-    gradient ascent on the log-likehood.
+    gradient ascent on the log-likelihood.
 
     Args:
         learn_rate (float): step size of gradient in each update. Larger values converge
-                            faster, and a value too large makes the training oscillate.
+                            faster, but a value too large makes the training oscillate.
                             0.5 by default. Must be greater than 0.
         max_iter (int): max number of iterations on training process. If reached before
-                        convergence, a RuntimeWarning is raised, and keep the last betas.
-                        1000 by default. Must be greater than 0
+                        convergence, a RuntimeWarning is raised and the last betas are
+                        kept. 5000 by default. Must be greater than 0
         tol (float): convergence tolerance in model training. Iterations stop when the step
                      becomes lower than tolerance. 1e-6 by default. Must be greater than 0
     """
@@ -81,7 +81,8 @@ class logistic_regression:
 
     def predict_probabilities(self, x):
         """
-        Predict the probability of x in class 1 using the current beta coefficients
+        Predict the probability of each class (0 and 1) for x using the current beta
+        coefficients
 
         Args:
             x (np.ndarray): Feature matrix with shape (n_samples, n_features)
@@ -175,7 +176,7 @@ class logistic_regression:
         """
 
         # Probability of class 1 (column 1)
-        probs = self.predict_prob(x_new)[:, 1]
+        probs = self.predict_probabilities(x_new)[:, 1]
 
         # According the plug-in method: select the most probable class
         # We have two classes, so p_0(x) = 1 - p_1(x) and p_1(x) > p_0(x) iff p_1(x) > 0.5
