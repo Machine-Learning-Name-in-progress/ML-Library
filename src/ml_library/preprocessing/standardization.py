@@ -60,5 +60,6 @@ def standardization(
         else:
             warnings.warn(f"{j} column has variance = 0, so all values are set to 0")
             df[j] = 0
+            metrics[j]["std"] = 0.0
 
     return df, metrics
