@@ -5,20 +5,22 @@ import numpy as np
 
 class logistic_regression:
     """
-    Logistic regression classification model
+    Logistic regression classification model for two classes (0 and 1), trained by
+    gradient ascent on the log-likehood.
 
     Args:
-        learn_rate (float): step size of gradient, that will be used in training method.
-                            0.1 by default. Must be greater than 0.
-        max_iter (int): max number of iterations on training process, preventing too many
-                        iterations when the betas don't converge.
+        learn_rate (float): step size of gradient in each update. Larger values converge
+                            faster, and a value too large makes the training oscillate.
+                            0.5 by default. Must be greater than 0.
+        max_iter (int): max number of iterations on training process. If reached before
+                        convergence, a RuntimeWarning is raised, and keep the last betas.
                         1000 by default. Must be greater than 0
         tol (float): convergence tolerance in model training. Iterations stop when the step
                      becomes lower than tolerance. 1e-6 by default. Must be greater than 0
     """
 
     def __init__(
-        self, learn_rate: float = 0.1, max_iter: int = 1000, tol: float = 1e-6
+        self, learn_rate: float = 0.5, max_iter: int = 5000, tol: float = 1e-6
     ):
         # learn_rate validate
         if not isinstance(learn_rate, (int, float)):
@@ -77,7 +79,7 @@ class logistic_regression:
 
         return 1 / (1 + np.exp(-z))
 
-    def predict_prob(self, x):
+    def predict_probabilities(self, x):
         """
         Predict the probability of x in class 1 using the current beta coefficients
 
@@ -85,7 +87,8 @@ class logistic_regression:
             x (np.ndarray): Feature matrix with shape (n_samples, n_features)
 
         Returns:
-            (np.ndarray): Estimated probability of class 1 for each sample
+            (np.ndarray): Matrix with shape (n_samples, 2). Column 0 has the estimated
+                          probability of class 0, and column 1 of class 1
         """
         # Validate training before predict
         if self._beta is None:
@@ -96,8 +99,10 @@ class logistic_regression:
 
         # Compute probability with given x and current coefficients beta
         z = x @ self._beta
+        prob_1 = self._sigmoid(z)
 
-        return self._sigmoid(z)
+        # Knowing that p_0(x) = 1 - p_1(x)
+        return np.column_stack((1 - prob_1, prob_1))
 
     def fit(self, x_train, y_train):
         """
@@ -159,8 +164,8 @@ class logistic_regression:
     def predict(self, x_new):
         """
         Predict the class (0 or 1) for new points. A point is classified as 1 when its
-        estimated probability of class 1, given by predict_prob() is greater than 0.5, and
-        classified as 0 otherwise.
+        estimated probability of class 1, given by predict_probabilities() is greater
+        than 0.5, and classified as 0 otherwise.
 
         Args:
             x_new (np.ndarray): Feature matrix with shape (n_new_samples, n_features)
@@ -169,7 +174,8 @@ class logistic_regression:
             (np.ndarray): array with predicted labels for each sample of x_new
         """
 
-        probs = self.predict_prob(x_new)
+        # Probability of class 1 (column 1)
+        probs = self.predict_prob(x_new)[:, 1]
 
         # According the plug-in method: select the most probable class
         # We have two classes, so p_0(x) = 1 - p_1(x) and p_1(x) > p_0(x) iff p_1(x) > 0.5
