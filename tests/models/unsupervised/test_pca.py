@@ -39,7 +39,7 @@ def test_pca_standardization():
     pca_test = pca(n_components=2, standardize=True)
     pca_test.fit(X)
 
-    assert pca_test.std[0] == pytest.approx(1.0, abs=atol)
+    assert pca_test.std[0] == pytest.approx(0.0, abs=atol)
     assert pca_test.std[1] == pytest.approx(np.sqrt(8/3) * 1000, abs=atol)
     assert pca_test.std[2] == pytest.approx(np.sqrt(2/3) / 1000, abs=atol)
 

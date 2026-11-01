@@ -80,9 +80,7 @@ class pca:
 
         if self.standardize:
             self.std = np.std(X_center, axis=0)
-            # Constant features have std = 0. To avoid division by zero or wrong scaling, we change to 1.
-            self.std[self.std == 0] = 1.0
-            X_center = X_center / self.std
+            X_center[:, self.std != 0] = X_center[:, self.std != 0] / self.std[self.std != 0]
 
         if self.solver == 'eigen':
             # Calculates the eigenvectors of the covariance matrix.
@@ -115,7 +113,7 @@ class pca:
         X_center = X_array - self.mean
         
         if self.standardize:
-            X_center = X_center / self.std
+            X_center[:, self.std != 0] = X_center[:, self.std !=0] / self.std[self.std != 0]
         
         return np.dot(X_center, self.components)
 
