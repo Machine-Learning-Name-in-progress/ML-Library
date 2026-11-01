@@ -118,38 +118,3 @@ class polynomial_regression:
     @property
     def coefficients(self):
         return np.concatenate((self.model_intercept, self.coef), axis=None)
-
-if __name__ == "__main__":
-    # TODO: remove temporary tests. 
-    # TODO: consider numerical stability (i.e.: deg=5 for x_test with 7 entries below).
-    # TODO: alert for insufficient data for degree of regression (i.e.: deg=5 below).
-    x_test = np.array([-2, -1, 0, 1, 2])
-    y_test = 3 + 2*x_test + x_test**2
-    np.random.seed(67)
-    error = np.random.normal(0.0, 0.5, size=len(x_test))
-    y_noise = y_test + error
-    deg = 4
-
-    x_test2 = np.array([[-3, -2, -1, 0, 1, 2, 3], [-30, -20, -10, 0, 10, 20, 30]])
-    print(x_test2.ndim)
-
-    # Test OLS
-    test_ols = polynomial_regression(degree=deg, model_choice='ols', intercept=True)
-    test_ols.fit(x_test, y_noise)
-    print(f"OLS: {test_ols.model_intercept:.3f} and {test_ols.coef}")
-
-    # Test Ridge
-    test_ridge = polynomial_regression(degree=deg, model_choice='ridge', intercept=True, lam=0.1)
-    test_ridge.fit(x_test, y_noise)
-    print(f"Ridge: {test_ridge.model_intercept:.3f} and {test_ridge.coef}")
-
-    # Test Lasso
-    test_lasso = polynomial_regression(degree=deg, model_choice='lasso', intercept=True, lam=0.1)
-    test_lasso.fit(x_test, y_noise)
-    print(f"Lasso: {test_lasso.model_intercept:.3f} and {test_lasso.coef}")
-
-    # Test exceptions
-    try:
-        test_ols.fit(x_test2, y_noise)
-    except ValueError as V:
-        print(f"Exception: {V}")
