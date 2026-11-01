@@ -78,3 +78,25 @@ def test_grid_search_cv_refit(sample_data):
     predictions = best_model.predict(X)
     # assert predictions shape
     np.testing.assert_equal(predictions.shape, y.shape)
+
+
+def test_grid_search_cv_greater_is_better(sample_data):
+    """Test grid search with a metric where greater score is better."""
+    X, y = sample_data
+    param_grid = {"multiplier": [1.0, 2.0, 3.0]}
+
+    # Dummy metric where higher is better (e.g., accuracy proxy)
+    def dummy_accuracy(y_true, y_pred):
+        return float(np.mean(y_pred))
+
+    results = grid_search_cv(
+        DummyRegressor,
+        param_grid,
+        X,
+        y,
+        k=5,
+        scoring=dummy_accuracy,
+        greater_is_better=True,
+    )
+
+    np.testing.assert_equal(results["best_params"], {"multiplier": 3.0})

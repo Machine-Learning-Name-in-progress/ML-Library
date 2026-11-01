@@ -7,7 +7,9 @@ import numpy as np
 from ml_library.model_selection.kfold import kfold_indices
 
 
-def grid_search_cv(model, param_grid, X, y, k=5, scoring=None):
+def grid_search_cv(
+    model, param_grid, X, y, k=5, scoring=None, greater_is_better: bool = False
+):
     """
     Grid search method for tuning a model's hyperparameters.
 
@@ -18,6 +20,8 @@ def grid_search_cv(model, param_grid, X, y, k=5, scoring=None):
     y (array-like): The target values.
     k (int, optional): The number of folds.
     scoring (callable, optional): The scoring function.
+    greater_is_better (bool, optional): Whether greater score is
+        better (default is False, suitable for loss/error).
 
     Returns:
     dict: A dictionary containing the best parameters,
@@ -38,7 +42,7 @@ def grid_search_cv(model, param_grid, X, y, k=5, scoring=None):
         dict(zip(param_keys, p)) for p in itertools.product(*param_values)
     ]
 
-    best_score = np.inf
+    best_score = -np.inf if greater_is_better else np.inf
     best_params = None
 
     for params in param_combinations:
@@ -53,7 +57,11 @@ def grid_search_cv(model, param_grid, X, y, k=5, scoring=None):
 
         mean_score = np.mean(fold_scores)
 
-        if mean_score < best_score:
+        if (
+            (mean_score > best_score)
+            if greater_is_better
+            else (mean_score < best_score)
+        ):
             best_score = mean_score
             best_params = params
 
