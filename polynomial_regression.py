@@ -12,6 +12,7 @@ class polynomial_regression:
         self.degree = degree
         self.has_intercept = intercept
         self.model_choice = model_choice
+        self.coef = None
 
         self.lam = lam
         self.eps = eps
@@ -37,14 +38,14 @@ class polynomial_regression:
         if not isinstance(intercept, bool):
             raise TypeError(f"Invalid data type: Expected intercept flag (intercept) to have a bool data type, got '{type(intercept).__name__}'.")
 
-        if not isinstance(lam, float):
-            raise TypeError(f"Invalid data type: Expected lambda hyperparameter (lam) to have a float data type, got '{type(lam).__name__}'.")
+        if not isinstance(lam, (float, int)):
+            raise TypeError(f"Invalid data type: Expected lambda hyperparameter (lam) to have a float or int data type, got '{type(lam).__name__}'.")
 
         if lam <= 0:
             raise ValueError("Invalid value for (lam): Lambda hyperparameter (lam) must be a positive value.")
 
-        if not isinstance(eps, float):
-            raise TypeError(f"Invalid data type: Expected epsilon convergence parameter (eps) to have a float data type, got '{type(eps).__name__}'.")
+        if not isinstance(eps, (float, int)):
+            raise TypeError(f"Invalid data type: Expected epsilon convergence parameter (eps) to have a float or int data type, got '{type(eps).__name__}'.")
 
         if eps <= 0:
             raise ValueError("Invalid value for (eps): Epsilon convergence parameter (eps) must be a positive value.")
@@ -56,60 +57,67 @@ class polynomial_regression:
             raise ValueError("Invalid value for (max_iter): Maximum of iterations convergence parameter (max_iter) must be a positive value.")
 
     def _exceptions_data(self, x: np.ndarray, y: np.ndarray = None) -> None:
-        if not np.issubdtype(x.dtype, np.number):
-            raise TypeError(f"Invalid data type: Expected feature vector (x) to have a numeric data type, got '{x.dtype}'.")
+        if not isinstance(x, (list, np.ndarray, tuple)):
+            raise TypeError(f"Invalid data type: Feature vector must be array-like (list, numpy array or tuple), got '{type(x).__name__}'.")
 
-        if x.ndim != 1:
-            raise ValueError(f"Expected a 1-D array of shape (n_points) for polynomial regression input, got '{x.ndim}-D'.")
+        try:
+            x_array = np.asarray(x, dtype=np.float64)
+        except (ValueError, TypeError):
+            raise TypeError("Invalid data type: Feature vector must contain only numerical values.")
+
+        if x_array.ndim != 1:
+            raise ValueError(f"Expected a 1-D array of shape (n_points) for polynomial regression input, got '{x_array.ndim}-D'.")
 
         if y is not None:
-            if not np.issubdtype(y.dtype, np.number):
-                raise TypeError(f"Invalid data type: Expected target vector (y) to have a numeric data type, got '{y.dtype}'.")
+            if not isinstance(y, (list, np.ndarray, tuple)):
+                raise TypeError(f"Invalid data type: Target vector must be array-like (list, numpy array or tuple), got '{type(y).__name__}'.")
+
+            try:
+                y_array = np.asarray(y, dtype=np.float64)
+            except (ValueError, TypeError):
+                raise TypeError("Invalid data type: Target vector must contain only numerical values.")
             
-            if y.ndim != 1:
-                raise ValueError(f"Expected a 1-D array of shape (n_points) for polynomial regression output, got '{y.ndim}-D'.")
+            if y_array.ndim != 1:
+                raise ValueError(f"Expected a 1-D array of shape (n_points) for polynomial regression output, got '{y_array.ndim}-D'.")
             
-            if x.shape[0] != y.shape[0]:
+            if x_array.shape[0] != y_array.shape[0]:
                 raise ValueError("Dimension mismatch: Feature vector (x) and target vector (y) must have the same length.")
+
+            return x_array, y_array
+            
+        return x_array
 
     def _build_design(self, x: np.ndarray) -> np.ndarray:
         X = np.array([[val_xi**d for d in range(1, self.degree + 1)] for val_xi in x])
         return X
         
     def fit(self, x: np.ndarray, y: np.ndarray) -> None:
-        self._exceptions_data(x, y)
-        X = self._build_design(x)
+        x_array, y_array = self._exceptions_data(x, y)
+        X = self._build_design(x_array)
 
         if self.model_choice == 'ols':
-            self.model.fit(X, y, intercept=self.has_intercept)
+            self.model.fit(X, y_array, intercept=self.has_intercept)
         elif self.model_choice == 'ridge':
-            self.model.fit(X, y, intercept=self.has_intercept, lam=self.lam)
+            self.model.fit(X, y_array, intercept=self.has_intercept, lam=self.lam)
         else:
-            self.model.fit(X, y, intercept=self.has_intercept, lam=self.lam, eps=self.eps, max_iter=self.max_iter)
+            self.model.fit(X, y_array, intercept=self.has_intercept, lam=self.lam, eps=self.eps, max_iter=self.max_iter)
 
         self.coef = self.model.coef
         self.model_intercept = self.model.intercept
 
     def predict(self, x: np.ndarray) -> np.ndarray:
-        self._exceptions_data(x)
-        X = self._build_design(x)
+        if self.coef == None:
+            raise RuntimeError("Model is not fitted yet. Call fit() first.")
+
+        x_array = self._exceptions_data(x)
+        X = self._build_design(x_array)
 
         preds = self.model.predict(X)
         return preds
 
-# TODO: MAE, R2_adjusted. Adapt implementation of other metrics
-
-def RSS(y: np.ndarray, y_pred: np.ndarray) -> float:
-    return np.sum((y - y_pred)**2)
-
-def MSE(y: np.ndarray, y_pred: np.ndarray) -> float:
-    return RSS(y, y_pred)/len(y)
-
-def RMSE(y: np.ndarray, y_pred: np.ndarray) -> float:
-    pass
-
-def R2(y: np.ndarray, y_pred: np.ndarray) -> float:
-    pass
+    @property
+    def coefficients(self):
+        return np.concatenate((self.model_intercept, self.coef), axis=None)
 
 if __name__ == "__main__":
     # TODO: remove temporary tests. 
