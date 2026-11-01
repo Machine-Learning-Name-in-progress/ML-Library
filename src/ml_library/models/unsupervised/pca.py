@@ -113,7 +113,7 @@ class pca:
         X_center = X_array - self.mean
         
         if self.standardize:
-            X_center[:, self.std != 0] = X_center[:, self.std !=0] / self.std[self.std != 0]
+            X_center[:, self.std != 0] = X_center[:, self.std != 0] / self.std[self.std != 0]
         
         return np.dot(X_center, self.components)
 
