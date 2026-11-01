@@ -10,9 +10,27 @@ class _linear_regression:
         intercept (float, optional): The value of the intercept coefficient.
     """
     def __init__(self):
-        self.coef = []
-        self.intercept = 0
+        self._coef = []
+        self._intercept = 0.0
         return
+
+    @property
+    def coef(self):
+        """Provide access to the private attribute _coef.
+
+        Returns:
+            np.ndarray: The regression coefficients.
+        """
+        return self._coef
+
+    @property
+    def intercept(self):
+        """Provide access to the private attribute _intercept.
+
+        Returns:
+            float: The regression intercept coefficient.
+        """
+        return self._intercept
     
     def fit(self):
         """Abstract method to fit the model"""
@@ -33,7 +51,7 @@ class _linear_regression:
 
         self._exceptions(X_p, np.zeros(X_p.shape[0]))
         
-        y = X_p @ self.coef + self.intercept
+        y = X_p @ self._coef + self._intercept
         return y
 
     def RSS(self, X: np.ndarray, y: np.ndarray) -> float:
@@ -101,14 +119,14 @@ class _linear_regression:
 
     def _exceptions(self, X: np.ndarray, y: np.ndarray) -> None:
         """Private method to log internal exceptions"""
-        if(self.coef==[]):
+        if(self._coef==[]):
             raise ValueError("Model is not yet fitted, call .fit() first.")
         
         if not np.issubdtype(X.dtype, np.number):
-            raise TypeError(f"Invalid data type: Expected feature matrix (X) to have a numeric data type, got '{X.dtype}'")
+            raise TypeError(f"Invalid data type: Expected feature matrix (X) to have a numeric data type, got '{X.dtype}'.")
         
         if not np.issubdtype(y.dtype, np.number):
-            raise TypeError(f"Invalid data type: Expected target vector (y) to have a numeric data type, got '{y.dtype}'")
+            raise TypeError(f"Invalid data type: Expected target vector (y) to have a numeric data type, got '{y.dtype}'.")
         
         if(X.ndim!=2):
             raise ValueError("Expected a 2-D array of shape (n_points, n_features).")
@@ -119,7 +137,7 @@ class _linear_regression:
         if(X.shape[0]!=y.shape[0]):
             raise ValueError("Dimension mismatch: The number of rows in feature matrix (X) must equal the number of samples in the target vector (y).")
         
-        if(X.shape[1]!=len(self.coef)):
+        if(X.shape[1]!=len(self._coef)):
             raise ValueError("Dimension mismatch: The number of columns in feature matrix (X) must equal the number of model coefficients.")
         return
 
@@ -148,7 +166,7 @@ class ordinary_least_squares(_linear_regression):
 
         self._ols_exceptions(X_t, y_t, intercept)
 
-        self.intercept = 0
+        self._intercept = 0.0
 
         if(intercept):
             ones_column = np.ones((X_t.shape[0],1))
@@ -157,10 +175,10 @@ class ordinary_least_squares(_linear_regression):
         beta = np.linalg.solve(X_t.T @ X_t, X_t.T @ y_t)
 
         if(intercept):
-            self.intercept = beta[0]
+            self._intercept = beta[0]
             beta = beta[1:]
 
-        self.coef = beta
+        self._coef = beta
         return
 
     def _ols_exceptions(self, X: np.ndarray, y: np.ndarray, intercept: bool) -> None:
@@ -221,14 +239,14 @@ class ridge(_linear_regression):
         X_norm, y_norm = self._normalize(X_t,y_t)
 
         I = np.eye(X_t.shape[1])
-        self.intercept = 0
+        self._intercept = 0.0
 
         beta = np.linalg.solve(X_norm.T @ X_norm + lam*I, X_norm.T @ y_norm)
         beta = np.std(y_t) * beta/np.std(X_t, axis = 0)
-        self.coef = beta
+        self._coef = beta
 
         if(intercept):
-            self.intercept = np.mean(y_t) - np.mean(X_t, axis=0) @ beta
+            self._intercept = np.mean(y_t) - np.mean(X_t, axis=0) @ beta
         return
 
     def _normalize(self, X: np.ndarray, y: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
@@ -243,8 +261,13 @@ class ridge(_linear_regression):
         Returns:
             tuple[np.ndarray, np.ndarray]: The standardized arrays for X and y.
         """
-        X_n = (X - np.mean(X, axis=0))/np.std(X, axis = 0)
-        y_n = (y - np.mean(y))/np.std(y)
+        X_std = np.std(X, axis = 0)
+        X_safe_std = np.where(X_std == 0, 1.0, X_std)
+        y_std = np.std(y)
+        y_safe_std = np.where(y_std == 0, 1.0, y_std)
+
+        X_n = (X - np.mean(X, axis=0))/X_safe_std
+        y_n = (y - np.mean(y))/y_safe_std
         return X_n, y_n
 
     def _ridge_exceptions(self, X: np.ndarray, y: np.ndarray, lam: float, intercept: bool) -> None:
@@ -255,7 +278,7 @@ class ridge(_linear_regression):
         if not np.issubdtype(y.dtype, np.number):
             raise TypeError(f"Invalid data type: Expected target vector (y) to have a numeric data type, got '{y.dtype}'.")
 
-        if not isinstance(lam, float):
+        if not isinstance(lam, (float,int)):
             raise TypeError(f"Invalid data type: Expected lambda hyperparameter (lam) to have a float data type, got '{type(lam).__name__}'.")
 
         if not isinstance(intercept, bool):
@@ -303,16 +326,16 @@ class lasso(_linear_regression):
         self._lasso_exceptions(X_t, y_t, lam, intercept, eps, max_iter)
 
         X_norm, y_norm = self._normalize(X_t,y_t)
-        self.intercept = 0
+        self._intercept = 0.0
 
         beta = self._coordinate_descent(X_norm, y_norm, lam, eps, max_iter)
 
         beta = np.std(y_t) * beta/np.std(X_t, axis = 0).reshape(X_t.shape[1],1)
-        self.coef = beta.flatten()
+        self._coef = beta.flatten()
 
         if(intercept):
-            self.intercept = np.mean(y_t) - np.mean(X_t, axis=0) @ beta
-            self.intercept = self.intercept[0]
+            self._intercept = np.mean(y_t) - np.mean(X_t, axis=0) @ beta
+            self._intercept = self._intercept[0]
         return
 
     def _coordinate_descent(self, X: np.ndarray, y: np.ndarray, lam: float, eps: float, max_iter: int) -> np.ndarray:
@@ -358,8 +381,14 @@ class lasso(_linear_regression):
         Returns:
             tuple[np.ndarray, np.ndarray]: The standardized arrays for X and y.
         """
-        X_n = (X - np.mean(X, axis=0))/np.std(X, axis = 0)
-        y_n = (y - np.mean(y))/np.std(y)
+        X_std = np.std(X, axis = 0)
+        X_safe_std = np.where(X_std == 0, 1.0, X_std)
+        y_std = np.std(y)
+        y_safe_std = np.where(y_std == 0, 1.0, y_std)
+        
+        X_n = (X - np.mean(X, axis=0))/X_safe_std
+        y_n = (y - np.mean(y))/y_safe_std
+
         return X_n, y_n
 
     def _lasso_exceptions(self, X: np.ndarray, y: np.ndarray, lam: float, intercept: bool, eps: float, max_iter: int) -> None:
@@ -370,16 +399,16 @@ class lasso(_linear_regression):
         if not np.issubdtype(y.dtype, np.number):
             raise TypeError(f"Invalid data type: Expected target vector (y) to have a numeric data type, got '{y.dtype}'.")
 
-        if not isinstance(lam, float):
+        if not isinstance(lam, (float,int)):
             raise TypeError(f"Invalid data type: Expected lambda hyperparameter (lam) to have a float data type, got '{type(lam).__name__}'.")
 
         if not isinstance(intercept, bool):
             raise TypeError(f"Invalid data type: Expected intercept flag (intercept) to have a bool data type, got '{type(intercept).__name__}'.")
 
-        if not isinstance(eps, float):
+        if not isinstance(eps, (float, int)):
             raise TypeError(f"Invalid data type: Expected epsilon convergence parameter (eps) to have a float data type, got '{type(eps).__name__}'.")
 
-        if not isinstance(max_iter, int):
+        if (not isinstance(max_iter, int)) and (not(isinstance(max_iter, float) and max_iter.is_integer())):
             raise TypeError(f"Invalid data type: Expected maximum of iterations convergence parameter (max_iter) to have a int data type, got '{type(max_iter).__name__}'.")
 
         if(lam<0):
