@@ -16,6 +16,9 @@ def test_pca_eigen():
 def test_pca_svd():
     pass
 
+def test_pca_standardization_constant_feature():
+    pass
+
 def test_pca_invalid_component_number():
     with pytest.raises(ValueError):
         pca(n_components=-1)

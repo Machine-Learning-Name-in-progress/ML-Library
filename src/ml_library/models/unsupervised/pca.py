@@ -1,7 +1,6 @@
 import numpy as np
 
-# TODO: review and add docstrings, exceptions 
-# TODO: optional standardization parameter
+# TODO: review and add docstrings and exceptions
 # TODO: remove temporary tests
 class pca:
     """
@@ -11,15 +10,22 @@ class pca:
             n_components (int): Number of principal components.
             solver (str, optional): Method used to find the principal components.
                 Options are 'eigen' (covariance matrix, default) and 'svd'.
+            standardize (bool, optional): Defines whether the features must be standardized before fitting or not. 
+                Default is False.
         
         Attributes:
             n_components (int): Number of principal components.
             components (np.ndarray): Principal components identified in the original feature space.
             mean (np.ndarray): Array containing the mean for each feature, estimated from the training set.
+            std (np.ndarray): Array containing the standard deviation for each feature. 
+                If standarize = False, std is None.
     """
-    def __init__(self, n_components: int, solver: str = 'eigen') -> None:
+    def __init__(self, n_components: int, solver: str = 'eigen', standardize: bool = False) -> None:
         if not isinstance(n_components, int):
             raise TypeError(f"The number of components must be an integer, got {type(n_components).__name__}.")
+
+        if not isinstance(standardize, bool):
+            raise TypeError(f"Standardize must be a boolean variable, got {type(standardize).__name__}.")
 
         if n_components <= 0:
             raise ValueError(f"The number of components must be positive, got {n_components}.")
@@ -30,8 +36,10 @@ class pca:
         
         self.n_components = n_components
         self.solver = solver
+        self.standardize = standardize
         self.components = None
         self.mean = None
+        self.std = None
 
     def fit(self, X: np.ndarray) -> None:
         """
@@ -48,6 +56,12 @@ class pca:
         
         self.mean = np.mean(X, axis=0)
         X_center = X - self.mean
+
+        if self.standardize:
+            self.std = np.std(X_center, axis=0)
+            # Constant features have std = 0. To avoid division by zero or wrong scaling, we change to 1.
+            self.std[self.std == 0] = 1.0
+            X_center = X_center / self.std
 
         if self.solver == 'eigen':
             # Calculates the eigenvectors of the covariance matrix.
@@ -72,7 +86,12 @@ class pca:
         """
         if self.components is None:
             raise RuntimeError("Model is not fitted yet, call fit() first.")
+        
         X_center = X - self.mean
+        
+        if self.standardize:
+            X_center = X_center / self.std
+        
         return np.dot(X_center, self.components)
 
     def fit_transform(self, X: np.ndarray) -> np.ndarray:
