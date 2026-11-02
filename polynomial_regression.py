@@ -17,7 +17,7 @@ class polynomial_regression:
         degree (int): Degree of the polynomial used for regression.
         has_intercept (bool): Whether the regression has an intercept.
         model_choice (str): Model chosen for the regression.
-        model (object): Model as an object from inherited from the linear regression.
+        model (object): Model as an object inherited from the linear regression.
         coef (np.ndarray): Calculated coefficients for the regression.
         model_intercept (float): Calculated intercept for the regression.
         lam (float): Regularization hyperparameter.
