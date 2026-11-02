@@ -53,9 +53,14 @@ class Sigmoid:
         Returns:
             Output layer of the neural network.
         """
-        self.input_layer = input_layer
-        self.output_layer = 1 / (1 + np.exp(-input_layer))
-
+        self.input_layer = np.asarray(input_layer, dtype=np.float64)
+        z = np.exp(-np.abs(self.input_layer))
+        # fixing underflow for large negative values
+        # for x >= 0: 1 / (1 + z)
+        # for x < 0:  z / (1 + z)
+        self.output_layer = np.where(
+            self.input_layer >= 0, 1.0 / (1.0 + z), z / (1.0 + z)
+        )
         return self.output_layer
 
     def backward(self, gradient: np.ndarray) -> np.ndarray:

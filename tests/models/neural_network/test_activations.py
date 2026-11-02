@@ -65,3 +65,12 @@ def test_sigmoid_backward():
     np.testing.assert_array_almost_equal(
         gradient, expected_gradient, decimal=7
     )
+
+
+def test_sigmoid_forward_stability():
+    """Test Sigmoid with large positive and negative inputs."""
+    sigmoid = Sigmoid()
+    x = np.array([-1000.0, 1000.0])
+    result = sigmoid.forward(x)
+    expected = np.array([0.0, 1.0])
+    np.testing.assert_array_almost_equal(result, expected, decimal=7)
