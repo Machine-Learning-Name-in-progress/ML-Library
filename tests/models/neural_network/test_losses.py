@@ -19,7 +19,7 @@ def test_mse_forward():
     y_real = np.array([0.0, 0.0, 0.0, 0.0, 0.0])
 
     # act:
-    loss = mse.forward(y_pred, y_real)
+    loss = mse.forward(y_real, y_pred)
 
     # expected:
     expected_loss = 11.0
@@ -39,7 +39,7 @@ def test_mse_backward():
     y_real = np.array([0.0, 0.0, 0.0, 0.0, 0.0])
 
     # act:
-    mse.forward(y_pred, y_real)
+    mse.forward(y_real, y_pred)
     gradient = mse.backward()
 
     # expected:
@@ -62,7 +62,7 @@ def test_categorical_cross_entropy_forward():
     y_real = np.array([0, 1, 0])
 
     # act:
-    loss = cat_cross_entropy.forward(y_pred, y_real)
+    loss = cat_cross_entropy.forward(y_real, y_pred)
 
     # expected:
     expected_loss = 0.9162907
@@ -82,7 +82,7 @@ def test_categorical_cross_entropy_backward():
     y_real = np.array([0, 1, 0])
 
     # act:
-    cat_cross_entropy.forward(y_pred, y_real)
+    cat_cross_entropy.forward(y_real, y_pred)
     gradient = cat_cross_entropy.backward()
 
     # expected:
@@ -105,7 +105,7 @@ def test_binary_cross_entropy_forward():
     y_real = np.array([0, 1, 0, 1])
 
     # act:
-    loss = bin_cross_entropy.forward(y_pred, y_real)
+    loss = bin_cross_entropy.forward(y_real, y_pred)
 
     # expected:
     expected_loss = 0.6911551
@@ -125,7 +125,7 @@ def test_binary_cross_entropy_backward():
     y_real = np.array([1.0, 0.0, 1.0, 1.0])
 
     # act:
-    bin_cross_entropy.forward(y_pred, y_real)
+    bin_cross_entropy.forward(y_real, y_pred)
     gradient = bin_cross_entropy.backward()
 
     # expected:
