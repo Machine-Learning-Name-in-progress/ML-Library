@@ -137,3 +137,38 @@ def test_binary_cross_entropy_backward():
     np.testing.assert_array_almost_equal(
         gradient, expected_gradient, decimal=7
     )
+
+
+def test_cross_entropy_stability_extreme_values():
+    """Test cross entropy stability with 0.0 and 1.0 predictions.
+
+    Validates that forward and backward passes do not produce NaN or
+    infinite values when predictions reach boundary values.
+    """
+    bce = BinaryCrossEntropy()
+    y_real = np.array([0.0, 1.0])
+    y_pred = np.array([1.0, 0.0])
+    loss = bce.forward(y_real, y_pred)
+    np.testing.assert_equal(np.isfinite(loss), True)
+    gradient = bce.backward()
+    np.testing.assert_equal(np.all(np.isfinite(gradient)), True)
+
+
+def test_mse_batch_2d():
+    """Test MSE loss function with 2D batch inputs.
+
+    Verifies loss computation, gradient values, and output shape
+    preservation when inputs are two-dimensional matrices.
+    """
+    mse = MSE()
+    y_real = np.zeros((4, 2))
+    y_pred = np.ones((4, 2))
+    loss = mse.forward(y_real, y_pred)
+    expected_loss = 1.0
+    np.testing.assert_almost_equal(loss, expected_loss, decimal=7)
+    gradient = mse.backward()
+    expected_gradient = np.full((4, 2), 0.25)
+    np.testing.assert_array_almost_equal(
+        gradient, expected_gradient, decimal=7
+    )
+    np.testing.assert_equal(gradient.shape, (4, 2))

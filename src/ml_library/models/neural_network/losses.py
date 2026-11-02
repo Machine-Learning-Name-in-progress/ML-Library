@@ -72,7 +72,7 @@ class BinaryCrossEntropy:
         Returns:
             Gradient of the loss function with respect to y_pred.
         """
-        y_pred_clipped = np.clip(self.y_pred, self.eps, 1.0)
+        y_pred_clipped = np.clip(self.y_pred, self.eps, 1.0 - self.eps)
         gradient = (1.0 - self.y_real) / (
             1.0 - y_pred_clipped
         ) - self.y_real / y_pred_clipped
