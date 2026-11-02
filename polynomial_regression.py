@@ -1,10 +1,28 @@
 import numpy as np
 from linear_regression import ordinary_least_squares, ridge, lasso
 
-# TODO: docstrings
 class polynomial_regression:
     """
     A public class for polynomial regression using OLS, Ridge, or Lasso.
+
+    Args:
+        degree (int): Degree of the polynomial used for regression.
+        model_choice (str, optional): Method to be used for regression. Options are 'ols' (default), 'ridge', and 'lasso'.
+        intercept (bool, optional): Whether the regression has an intercept. Default is True.
+        lam (float, optional): Lambda hyperparameter for 'ridge' and 'lasso' methods. Default is 1.0.
+        eps (float, optional): Tolerance for 'lasso' method. Default is 1e-4.
+        max_iter (int, optional): Maximum number of iterations for 'lasso' method. Default is 10000.
+    
+    Attributes:
+        degree (int): Degree of the polynomial used for regression.
+        has_intercept (bool): Whether the regression has an intercept.
+        model_choice (str): Model chosen for the regression.
+        model (object): Model as an object from inherited from the linear regression.
+        coef (np.ndarray): Calculated coefficients for the regression.
+        model_intercept (float): Calculated intercept for the regression.
+        lam (float): Regularization hyperparameter.
+        eps (float): Convergence tolerance.
+        max_iter (int): Maximum number of iterations.
     """
     def __init__(self, degree: int, model_choice: str = 'ols', intercept=True, lam: float = 1.0, eps: float = 1e-4, max_iter: int = 10000) -> None:
         self._exceptions_init(degree, model_choice, intercept, lam, eps, max_iter)
@@ -26,6 +44,17 @@ class polynomial_regression:
             self.model = lasso()
         
     def _exceptions_init(self, degree: int, model_choice: str, intercept: bool, lam: float, eps: float, max_iter: int) -> None:
+        """
+        Private method to verify exceptions in the initialization.
+
+        Args:
+            degree (int): Degree of the polynomial regression.
+            model_choice (str): Model chosen for the regression.
+            intercept (bool): Whether the regression has an intercept.
+            lam (float): Regularization hyperparameter.
+            eps (float): Convergence tolerance.
+            max_iter (int): Maximum number of iterations.
+        """
         if not isinstance(degree, int):
             raise TypeError(f"Invalid data type: Expected polynomial degree for regression (degree) to have an int data type, got '{type(degree).__name__}'")
         
@@ -56,7 +85,17 @@ class polynomial_regression:
         if max_iter <= 0:
             raise ValueError("Invalid value for (max_iter): Maximum of iterations convergence parameter (max_iter) must be a positive value.")
 
-    def _exceptions_data(self, x: np.ndarray, y: np.ndarray = None) -> None:
+    def _exceptions_data(self, x: np.ndarray, y: np.ndarray = None) -> np.ndarray:
+        """
+        Private method to verify exceptions in inputs.
+
+        Args:
+            x (np.ndarray): Feature vector in the input data.
+            y (np.ndarray): Target vector in the input data.
+
+        Returns:
+            np.ndarray
+        """
         if not isinstance(x, (list, np.ndarray, tuple)):
             raise TypeError(f"Invalid data type: Feature vector must be array-like (list, numpy array or tuple), got '{type(x).__name__}'.")
 
@@ -88,10 +127,26 @@ class polynomial_regression:
         return x_array
 
     def _build_design(self, x: np.ndarray) -> np.ndarray:
+        """
+        Private method to build the design matrix.
+
+        Args:
+            x (np.ndarray): Feature vector used for the regression.
+        
+        Returns:
+            np.ndarray
+        """
         X = np.array([[val_xi**d for d in range(1, self.degree + 1)] for val_xi in x])
         return X
         
     def fit(self, x: np.ndarray, y: np.ndarray) -> None:
+        """
+        Obtains the polynomial regression using the method defined in the initialization.
+
+        Args:
+            x (np.ndarray): Feature vector used for the regression.
+            y (np.ndarray): Target vector used for the regression.
+        """
         x_array, y_array = self._exceptions_data(x, y)
         X = self._build_design(x_array)
 
@@ -106,6 +161,15 @@ class polynomial_regression:
         self.model_intercept = self.model.intercept
 
     def predict(self, x: np.ndarray) -> np.ndarray:
+        """
+        Returns the predicted values for a vector of inputs, using the previously trained model.
+
+        Args:
+            x (np.ndarray): Input values for the prediction.
+        
+        Returns:
+            np.ndarray
+        """
         if self.coef == None:
             raise RuntimeError("Model is not fitted yet. Call fit() first.")
 
@@ -117,4 +181,10 @@ class polynomial_regression:
 
     @property
     def coefficients(self):
+        """
+        Returns a list of coefficients, including the intercept.
+
+        Returns:
+            np.ndarray
+        """
         return np.concatenate((self.model_intercept, self.coef), axis=None)
