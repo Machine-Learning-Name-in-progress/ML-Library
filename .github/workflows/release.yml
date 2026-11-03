@@ -20,6 +20,14 @@ jobs:
         with:
           enable-cache: true
 
+      - name: Check tag matches pyproject version
+        run: |
+          version=$(uv version --short)
+          if [ "v$version" != "${{ github.ref_name }}" ]; then
+            echo "Tag ${{ github.ref_name }} does not match pyproject version v$version" >&2
+            exit 1
+          fi
+
       - name: Install dependencies
         run: uv sync --locked
 
