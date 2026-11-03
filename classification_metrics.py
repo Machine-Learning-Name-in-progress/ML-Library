@@ -233,14 +233,14 @@ def _exceptions(y_true: list, y_pred: list = None, probability_matrix: list = No
   if not isinstance(y_true, (list, np.ndarray, tuple)):
      raise TypeError("Invalid data type: Expected the target true values (y_true) to be in a list format.")
 
-  if y_pred != None:
+  if y_pred is not None:
     if not isinstance(y_pred, (list, np.ndarray, tuple)):
-        raise TypeError("Invalid data type: Expected the target predicted values (y_pred) to be in a list format.")
+        raise TypeError("Invalid data type: Expected the predicted values (y_pred) to be in a list format.")
 
     if len(y_true)!=len(y_pred):
         raise ValueError("The number of empirical values (y_true) must equal the number of predicted values (y_pred).")
 
-    if labels != None:
+    if labels is not None:
       if not isinstance(labels, (list, np.ndarray, tuple)):
           raise TypeError("Invalid data type: Expected the labels parameter to be in a list format.")
     
@@ -250,29 +250,29 @@ def _exceptions(y_true: list, y_pred: list = None, probability_matrix: list = No
       if not all(y in labels for y in y_pred):
           raise ValueError("The classes in the predicted values of y (y_pred) must match the classes specified in labels parameter.")
 
-    else:
-      p_matrix = np.ndarray(probability_matrix)
+  else:
+    p_matrix = np.array(probability_matrix)
 
-      if not np.issubdtype(p_matrix.dtype, np.number):
-         raise TypeError(f"Invalid data type: Expected probability matrix to have a numeric data type, got '{p_matrix.dtype}'")
+    if not np.issubdtype(p_matrix.dtype, np.number):
+        raise TypeError(f"Invalid data type: Expected probability matrix to have a numeric data type, got '{p_matrix.dtype}'")
 
-      if(X.ndim!=2):
-         raise ValueError("Expected a 2-D array for the probability matrix.")
+    if(p_matrix.ndim!=2):
+        raise ValueError("Expected a 2-D array for the probability matrix.")
 
-      if not bool(np.all(p_matrix>=0) and np.allclose(np.sum(p_matrix, axis=1), 1)):
-         raise ValueError("The probability matrix must contain only non-negative numbers and each row must sum to 1.")
+    if not bool(np.all(p_matrix>=0) and np.allclose(np.sum(p_matrix, axis=1), 1)):
+        raise ValueError("The probability matrix must contain only non-negative numbers and each row must sum to 1.")
 
-      if not isinstance(labels, (list, np.ndarray, tuple)):
-         raise TypeError("Invalid data type: Expected the labels parameter to be in a list format.")
-      
-      if not all(y in labels for y in y_true):
-              raise ValueError("The classes in the true values of y (y_true) must match the classes specified in labels parameter.")
+    if not isinstance(labels, (list, np.ndarray, tuple)):
+        raise TypeError("Invalid data type: Expected the labels parameter to be in a list format.")
+    
+    if not all(y in labels for y in y_true):
+            raise ValueError("The classes in the true values of y (y_true) must match the classes specified in labels parameter.")
 
-      if (p_matrix.shape[0]!=len(y_true)) or (p_matrix.shape[1]!=len(labels)):
-         raise ValueError(f"The shape of the probability matrix must be (n_points, n_labels), got '{p_matrix.shape}'")
+    if (p_matrix.shape[0]!=len(y_true)) or (p_matrix.shape[1]!=len(labels)):
+        raise ValueError(f"The shape of the probability matrix must be (n_points, n_labels), got '{p_matrix.shape}'")
 
-      if (method!=None) and (method!="OvR") and (method!="OvO"):
-        raise ValueError("The method must be 'OvR' (One vs Rest) or 'OvO' (One vs One).")
+    if (method is not None) and (method!="OvR") and (method!="OvO"):
+      raise ValueError("The method must be 'OvR' (One vs Rest) or 'OvO' (One vs One).")
 
-      if (weighted!=None) and (not isinstance(weighted, bool)):
-         raise TypeError("The weighted parameter must have a bool type.")
+    if (weighted is not None) and (not isinstance(weighted, bool)):
+        raise TypeError("The weighted parameter must have a bool type.")
