@@ -24,6 +24,34 @@ def test_ols_shape():
     assert isinstance(model.intercept, float)
     assert model.intercept == 0
 
+def test_ridge_shape():
+    X = np.array([[1,-1],[2,5],[0,-2],[-3,2],[3,4]])
+    y = np.array([1,2,3,4,5])
+    model = ridge()
+
+    model.fit(X,y, lam=1)
+    assert len(model.coef) == 2
+    assert isinstance(model.intercept, float)
+
+    model.fit(X,y, lam=1,intercept=False)
+    assert len(model.coef) == 2
+    assert isinstance(model.intercept, float)
+    assert model.intercept == 0
+
+def test_lasso_shape():
+    X = np.array([[1,-1],[2,5],[0,-2],[-3,2],[3,4]])
+    y = np.array([1,2,3,4,5])
+    model = lasso()
+
+    model.fit(X,y,lam=1)
+    assert len(model.coef) == 2
+    assert isinstance(model.intercept, float)
+
+    model.fit(X,y,lam=1,intercept=False)
+    assert len(model.coef) == 2
+    assert isinstance(model.intercept, float)
+    assert model.intercept == 0
+
 def test_ols_constant_value_regression():
     X = np.array([[1,2,3],[0,2,9],[-1,8,6],[8,5,3],[9,4,-3],[30,40,50],[-1,-2,-3],[0,-1,2],[11,-10,9],[5,3,1]])
     y = np.array([1,1,1,1,1,1,1,1,1,1])
@@ -49,6 +77,49 @@ def test_lasso_constant_value_regression():
     model.fit(X,y, lam=1)
 
     assert (np.allclose(model.coef, 0)) and (model.intercept == pytest.approx(1))
+
+def test_ols_perfect_plane_regression():
+    X = np.array([[1,2,3,4],[0,2,9,1],[-1,8,6,2],[8,5,3,9],[9,4,-3,1],[30,40,50,60],[-1,-2,-3,-8],[0,-1,2,4],[11,-10,9,-3],[5,3,1,-6]])
+    y = 1*X[:,0] + 2*X[:,1] + 3*X[:,2] + 4*X[:,3] + 5
+    model = ordinary_least_squares()
+
+    model.fit(X,y)
+
+    assert (model.coef == pytest.approx([1,2,3,4])) and (model.intercept == pytest.approx(5))
+
+def test_ridge_perfect_plane_regression():
+    X = np.array([[1,2,3,4],[0,2,9,1],[-1,8,6,2],[8,5,3,9],[9,4,-3,1],[30,40,50,60],[-1,-2,-3,-8],[0,-1,2,4],[11,-10,9,-3],[5,3,1,-6]])
+    y = 1*X[:,0] + 2*X[:,1] + 3*X[:,2] + 4*X[:,3] + 5
+    model = ridge()
+
+    model.fit(X,y,lam=1e-10)
+
+    assert (model.coef == pytest.approx([1,2,3,4])) and (model.intercept == pytest.approx(5))
+
+def test_lasso_perfect_plane_regression():
+    X = np.array([[1,2,3,4],[0,2,9,1],[-1,8,6,2],[8,5,3,9],[9,4,-3,1],[30,40,50,60],[-1,-2,-3,-8],[0,-1,2,4],[11,-10,9,-3],[5,3,1,-6]])
+    y = 1*X[:,0] + 2*X[:,1] + 3*X[:,2] + 4*X[:,3] + 5
+    model = lasso()
+
+    model.fit(X,y,lam=1e-10)
+
+    assert (model.coef == pytest.approx([1,2,3,4])) and (model.intercept == pytest.approx(5))
+
+def test_ridge_normalize_test():
+    X = [[1,2,3,4],[1,-2,3,5],[1,0,2,6],[1,1,1,1]]
+    y = [1,2,3,4]
+    X_n, y_n = ridge()._normalize(X,y)
+
+    np.testing.assert_allclose(X_n, [[0., 1.18321596, 0.90453403, 0.],[0., -1.52127766, 0.90453403, 0.53452248],[0., -0.16903085, -0.30151134, 1.06904497],[ 0., 0.50709255, -1.50755672, -1.60356745]])
+    assert y_n == pytest.approx([-1.34164079,-0.4472136, 0.4472136,1.34164079])
+
+def test_lasso_normalize_test():
+    X = [[1,2,3,4],[1,-2,3,5],[1,0,2,6],[1,1,1,1]]
+    y = [1,2,3,4]
+    X_n, y_n = lasso()._normalize(X,y)
+
+    np.testing.assert_allclose(X_n, [[0., 1.18321596, 0.90453403, 0.],[0., -1.52127766, 0.90453403, 0.53452248],[0., -0.16903085, -0.30151134, 1.06904497],[ 0., 0.50709255, -1.50755672, -1.60356745]])
+    assert y_n == pytest.approx([-1.34164079,-0.4472136, 0.4472136,1.34164079])
 
 def test_ols_shape_error_message():
     X = np.array([[1,2,3],[0,2,9],[-1,8,6],[8,5,3],[9,4,-3],[30,40,50],[-1,-2,-3],[0,-1,2],[11,-10,9],[5,3,1]])

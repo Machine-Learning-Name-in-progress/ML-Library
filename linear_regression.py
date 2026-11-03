@@ -242,7 +242,13 @@ class ridge(_linear_regression):
         self._intercept = 0.0
 
         beta = np.linalg.solve(X_norm.T @ X_norm + lam*I, X_norm.T @ y_norm)
-        beta = np.std(y_t) * beta/np.std(X_t, axis = 0)
+
+        X_std = np.std(X_t, axis = 0)
+        X_safe_std = np.where(X_std == 0, 1.0, X_std)
+        y_std = np.std(y_t)
+        y_safe_std = np.where(y_std == 0, 1.0, y_std)
+
+        beta = y_safe_std * beta/X_safe_std
         self._coef = beta
 
         if(intercept):
@@ -330,12 +336,17 @@ class lasso(_linear_regression):
 
         beta = self._coordinate_descent(X_norm, y_norm, lam, eps, max_iter)
 
-        beta = np.std(y_t) * beta/np.std(X_t, axis = 0).reshape(X_t.shape[1],1)
-        self._coef = beta.flatten()
+        X_std = np.std(X_t, axis = 0)
+        X_safe_std = np.where(X_std == 0, 1.0, X_std)
+        y_std = np.std(y_t)
+        y_safe_std = np.where(y_std == 0, 1.0, y_std)
+
+        beta = y_safe_std * beta/X_safe_std
+        self._coef = beta
 
         if(intercept):
             self._intercept = np.mean(y_t) - np.mean(X_t, axis=0) @ beta
-            self._intercept = self._intercept[0]
+            self._intercept = self._intercept
         return
 
     def _coordinate_descent(self, X: np.ndarray, y: np.ndarray, lam: float, eps: float, max_iter: int) -> np.ndarray:
@@ -355,17 +366,17 @@ class lasso(_linear_regression):
             np.ndarray: The calculated lasso slope coefficients.
         """
         p = X.shape[1]
-        beta = np.zeros(p).reshape(p,1)
-        beta_old = np.ones(p).reshape(p,1)
-        y = y[:, np.newaxis]
+        beta = np.zeros(p)
+        beta_old = np.ones(p)
         iter = 0
 
-        while(np.max(np.abs(beta-beta_old))>eps and iter<max_iter):
-            beta_old = beta
-            R = y + X*beta.T - X @ beta
-            z = np.sum(X*R, axis=0).reshape(p,1)
-            beta = (np.sign(z)*np.maximum(0, np.abs(z)-lam/2))/X.shape[0]
-            iter += 1
+        while(np.sum(np.abs(beta-beta_old))>eps or iter<max_iter):
+            beta_old = beta.copy()
+            for j in range(p):
+                r_j = y - X @ beta + X[:,j]*beta[j]
+                z_j = X[:,j]@r_j
+                beta[j] = (np.sign(z_j)*np.maximum(0, np.abs(z_j)-lam/2))/X.shape[0]
+                iter += 1
 
         return beta
 
