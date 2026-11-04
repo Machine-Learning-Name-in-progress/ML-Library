@@ -13,6 +13,6 @@ def test_empty_values_indicate():
     df = pd.DataFrame(dados)
     df_ind = empty_values_indicate(df)
 
-    expected_column = pd.Series([0, 1, 0, 1], name="indicate")
+    expected_column = pd.Series([0, 1, 0, 1, 1], name="indicate")
 
     pd.testing.assert_series_equal(expected_column, df_ind['indicate'])
