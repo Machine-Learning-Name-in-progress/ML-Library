@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from linear_regression import _linear_regression, ordinary_least_squares, ridge, lasso
+from src.ml_library.models.regression.linear_regression import _linear_regression, ordinary_least_squares, ridge, lasso
 
 def test_yet_not_fitted_error_message():
     X = np.array([[1,-1],[2,5],[0,-2],[-3,2],[3,4]])
