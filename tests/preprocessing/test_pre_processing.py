@@ -1,19 +1,19 @@
 import pytest
 import pandas as pd
-from .empty_values_indicate import empty_values_indicate
-from .empty_values_remove import empty_values_remove
-from .empty_values_replace import empty_values_replace
-from .normalization import normalization
-from .one_hot import one_hot
-from .standardization import standardization
+from src.ml_library.preprocessing.empty_values_indicate import empty_values_indicate
+from src.ml_library.preprocessing.empty_values_remove import empty_values_remove
+from src.ml_library.preprocessing.empty_values_replace import empty_values_replace
+from src.ml_library.preprocessing.normalization import normalization
+from src.ml_library.preprocessing.one_hot import one_hot
+from src.ml_library.preprocessing.standardization import standardization
 
 @pytest.fixture
 def data():
     data = {
         'Name': ['Ana', 'Bruno', 'Carlos', 'Diana', 'Eduardo'],
-        'Age': [25, pd.NA, 30, 22, pd.NA],
-        'City': ['São Paulo', 'Rio de Janeiro', 'Salvador', 'Belo Horizonte', pd.NA],
-        'Score': [8.5, pd.NA, 9.2, pd.NA, 6.5],
+        'Age': [25, float('nan'), 30, 22, float('nan')],
+        'City': ['São Paulo', 'Rio de Janeiro', 'Salvador', 'Belo Horizonte', float('nan')],
+        'Score': [8.5, float('nan'), 9.2, float('nan'), 6.5],
         }
 
     df = pd.DataFrame(data)
@@ -95,7 +95,7 @@ def test_empty_values_remove(data):
         'Name': ['Ana', 'Carlos', 'Diana'],
         'Age': [25, 30, 22],
         'City': ['São Paulo', 'Salvador', 'Belo Horizonte'],
-        'Score': [8.5, 9.2, pd.NA],
+        'Score': [8.5, 9.2, float('nan')],
         })
 
     pd.testing.assert_frame_equal(df_clean, df_expected, check_dtype=False)
@@ -104,9 +104,9 @@ def test_empty_values_remove(data):
     
     df_expected = pd.DataFrame({
         'Name': ['Ana', 'Bruno', 'Carlos', 'Diana'],
-        'Age': [25, pd.NA, 30, 22],
+        'Age': [25, float('nan'), 30, 22],
         'City': ['São Paulo', 'Rio de Janeiro', 'Salvador', 'Belo Horizonte'],
-        'Score': [8.5, pd.NA, 9.2, pd.NA],
+        'Score': [8.5, float('nan'), 9.2, float('nan')],
         })
 
     pd.testing.assert_frame_equal(df_clean, df_expected, check_dtype=False)
@@ -120,8 +120,6 @@ def test_empty_values_remove_exceptions(data):
     assert str(excep.value) == f"'{column}' column does not exist on dataframe"
 
 def test_empty_values_replace(data):
-    # This test is failing
-    # It is failing because empty_values_replace() method doesn't identify columns with NaN values as numerical ones.
     df = data
 
     df_replaced, dict = empty_values_replace(df, 'mean')
@@ -129,13 +127,41 @@ def test_empty_values_replace(data):
     df_expected = pd.DataFrame({
         'Name': ['Ana', 'Bruno', 'Carlos', 'Diana', 'Eduardo'],
         'Age': [25, 77/3, 30, 22, 77/3],
-        'City': ['São Paulo', 'Rio de Janeiro', 'Salvador', 'Belo Horizonte', pd.NA],
+        'City': ['São Paulo', 'Rio de Janeiro', 'Salvador', 'Belo Horizonte', float('nan')],
         'Score': [8.5, 24.2/3, 9.2, 24.2/3, 6.5],
         })
 
-    dict_expected = {'Name':77/3, 'Score': 24.2/3}
+    dict_expected = {'Age':77/3, 'Score': 24.2/3}
 
-    pd.testing.assert_frame_equal(df_replaced, df_expected, check_dtype=False, check_exact=False)
+    pd.testing.assert_frame_equal(df_replaced, df_expected, check_dtype=False)
+    assert dict == dict_expected
+
+    df_replaced, dict = empty_values_replace(df, 'median')
+    
+    df_expected = pd.DataFrame({
+        'Name': ['Ana', 'Bruno', 'Carlos', 'Diana', 'Eduardo'],
+        'Age': [25, 25, 30, 22, 25],
+        'City': ['São Paulo', 'Rio de Janeiro', 'Salvador', 'Belo Horizonte', float('nan')],
+        'Score': [8.5, 8.5, 9.2, 8.5, 6.5],
+        })
+
+    dict_expected = {'Age':25, 'Score': 8.5}
+
+    pd.testing.assert_frame_equal(df_replaced, df_expected, check_dtype=False)
+    assert dict == dict_expected
+
+    df_replaced, dict = empty_values_replace(df, 'fill', ['Age', 'Score'], fill_value=14)
+
+    df_expected = pd.DataFrame({
+        'Name': ['Ana', 'Bruno', 'Carlos', 'Diana', 'Eduardo'],
+        'Age': [25, 14, 30, 22, 14],
+        'City': ['São Paulo', 'Rio de Janeiro', 'Salvador', 'Belo Horizonte', float('nan')],
+        'Score': [8.5, 14, 9.2, 14, 6.5],
+        })
+
+    dict_expected = {'Age':14, 'Score': 14}
+
+    pd.testing.assert_frame_equal(df_replaced, df_expected, check_dtype=False)
     assert dict == dict_expected
 
 def test_empty_values_replace_excptions(data):
@@ -246,9 +272,6 @@ def one_hot_exceptions(categorical_data):
         one_hot(df, [column, '2'])
     assert str(excep.value) == f"{column} is not a categorical column, and cannot be encoded."
 
-def test_standartization(numerical_data):
-    df = numerical_data
-
 def test_standardization(numerical_data):
     df = numerical_data
 
@@ -268,7 +291,7 @@ def test_standardization(numerical_data):
     for column in ['2','3','4','5']:
         assert dict[column] == pytest.approx(dict_expected[column])
 
-def test_normalization_exceptions(numerical_data):
+def test_standardization_exceptions(numerical_data):
     df = numerical_data
 
     with pytest.raises(ValueError) as excep:
@@ -281,8 +304,9 @@ def test_normalization_exceptions(numerical_data):
         standardization(df, [column, '2'])
     assert str(excep.value) == f"{column} is not a numerical column and cannot be standardized"
 
-    with pytest.warns(UserWarning, match="2 column has variance = 0, so all values are set to 0"):
+    with pytest.warns(UserWarning) as excep:
         df['2'] = 1
         df_stand, _ = standardization(df)
 
-        assert (df_stand['2'] == 0).all()
+    assert str(excep[0].message) == "2 column has (numerically) zero variance, so all values are set to 0"
+    assert (df_stand['2'] == 0).all()
