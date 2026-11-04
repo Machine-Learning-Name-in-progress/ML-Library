@@ -1,5 +1,5 @@
 import numpy as np
-from linear_regression import ordinary_least_squares, ridge, lasso
+from .linear_regression import ordinary_least_squares, ridge, lasso
 
 class polynomial_regression:
     """
