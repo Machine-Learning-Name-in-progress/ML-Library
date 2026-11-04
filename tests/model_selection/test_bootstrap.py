@@ -1,4 +1,4 @@
-"""Test scrips for bootstrap functions."""
+"""Test scripts for bootstrap functions."""
 
 import numpy as np
 import pytest
@@ -8,19 +8,28 @@ from ml_library.model_selection.bootstrap import bootstrap_ci, bootstrap_sample
 # General arrange:
 @pytest.fixture
 def sample_data():
-    """Fixture providing clean sample data for all the tests."""
+    """Provide clean sample data for all the tests.
+
+    Returns:
+        tuple: A tuple (X, y) containing input features and targets.
+    """
     X = np.arange(20).reshape(10, 2)
     y = np.arange(10)
 
     return X, y
 
 
-# seed is 42 by standart inside the methods, where np.random.seed(42) is setted
+# seed is 42 by standard inside the methods,
+# where np.random.seed(42) is set
 
 
 # bootstrap sample tests:
 def test_bootstrap_sample_shape(sample_data):
-    """Verify if the shape is preserved in the bootstrap samples."""
+    """Verify if the shape is preserved in the bootstrap samples.
+
+    Args:
+        sample_data (tuple): Fixture with feature matrix X and target y.
+    """
     # arrange
     X, y = sample_data
     # act
@@ -32,7 +41,11 @@ def test_bootstrap_sample_shape(sample_data):
 
 
 def test_bootstrap_sample_duplicates(sample_data):
-    """Verify that bootstrap samples contain duplicates."""
+    """Verify that bootstrap samples contain duplicates.
+
+    Args:
+        sample_data (tuple): Fixture with feature matrix X and target y.
+    """
     # arrange
     X, y = sample_data
     # act
@@ -44,7 +57,11 @@ def test_bootstrap_sample_duplicates(sample_data):
 
 
 def test_bootstrap_sample_alignment(sample_data):
-    """Verify that bootstrap samples are aligned with the original data."""
+    """Verify that bootstrap samples are aligned with original data.
+
+    Args:
+        sample_data (tuple): Fixture with feature matrix X and target y.
+    """
     # arrange
     X, y = sample_data
 
@@ -57,7 +74,11 @@ def test_bootstrap_sample_alignment(sample_data):
 
 
 def test_bootstrap_sample_reproducibility(sample_data):
-    """Verify the reproducibility of bootstrap samples."""
+    """Verify the reproducibility of bootstrap samples.
+
+    Args:
+        sample_data (tuple): Fixture with feature matrix X and target y.
+    """
     # arrange
     X, y = sample_data
 
@@ -74,21 +95,28 @@ def test_bootstrap_sample_reproducibility(sample_data):
 
 
 def test_bootstrap_ci(sample_data):
-    """
-    Test bootstrap confidence interval method.
+    """Test bootstrap confidence interval method.
 
     Uses dummy model for quick and independent testing.
+
+    Args:
+        sample_data (tuple): Fixture with feature matrix X and target y.
     """
 
     # Dummy model
     class DummyModel:
+        """Dummy model for testing bootstrap confidence intervals."""
+
         def __init__(self):
+            """Initialize DummyModel."""
             self._mean = None
 
         def fit(self, X, y):
+            """Fit DummyModel by storing target mean."""
             self._mean = np.mean(y)
 
         def predict(self, X):
+            """Predict constant mean for all observations."""
             return np.full(len(X), self._mean)
 
     # arrange

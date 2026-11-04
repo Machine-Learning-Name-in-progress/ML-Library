@@ -43,7 +43,7 @@ def test_grid_search_cv_finds_best_params(sample_data):
 
     # assert dict
     np.testing.assert_(isinstance(results, dict))
-    np.testing.assert_(
+    np.testing.assert_equal(
         set(results.keys()), {"best_params", "best_score", "best_estimator"}
     )
 

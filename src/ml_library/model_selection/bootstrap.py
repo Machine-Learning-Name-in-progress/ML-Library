@@ -1,7 +1,5 @@
 """Bootstrap methods to select the best model."""
 
-from ast import Continue
-
 import numpy as np
 
 
@@ -18,7 +16,7 @@ def bootstrap_sample(X, y, seed=None):  # google standart docsring
     X_sample (array-like): The bootstrap samples of X.
     y_sample (array-like): The bootstrap samples of y.
     """
-    if seed:
+    if seed is not None:
         np.random.seed(seed)
     N = X.shape[0]
 
