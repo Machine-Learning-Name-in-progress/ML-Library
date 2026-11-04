@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from polynomial_regression import polynomial_regression
+from src.ml_library.models.regression.polynomial_regression import polynomial_regression
 
 # TODO: unify global seeds
 np.random.seed(67)
