@@ -33,6 +33,10 @@ class ReLU:
             Gradient of the loss function with
                 respect to the input layer.
         """
+
+        if self.input_layer is None:
+            raise RuntimeError("Call forward before backward.")
+        
         return gradient * (self.input_layer > 0)
 
 
@@ -54,8 +58,8 @@ class Sigmoid:
             Output layer of the neural network.
         """
         self.input_layer = np.asarray(input_layer, dtype=np.float64)
+        # avoid overflow by using a nonpositive exponent
         z = np.exp(-np.abs(self.input_layer))
-        # fixing underflow for large negative values
         # for x >= 0: 1 / (1 + z)
         # for x < 0:  z / (1 + z)
         self.output_layer = np.where(
@@ -74,4 +78,76 @@ class Sigmoid:
             Gradient of the loss function with
                 respect to the input layer.
         """
+
+        if self.output_layer is None:
+            raise RuntimeError("Call forward before backward.")
+
         return gradient * (self.output_layer * (1 - self.output_layer))
+
+
+class Linear:
+    """Linear Activation Function class."""
+
+    def forward(self, input_layer: np.ndarray) -> np.ndarray:
+        """Forward pass for the linear activation function.
+
+        Args:
+            input_layer: Input to the activation function.
+
+        Returns:
+            The input unchanged.
+        """
+        return input_layer
+
+    def backward(self, gradient: np.ndarray) -> np.ndarray:
+        """Backward pass for linear activation function.
+
+        Args:
+            gradient: Gradient of the loss function with
+                respect to the output layer.
+
+        Returns:
+            Gradient of the loss function with
+                respect to the input layer.
+        """
+
+        # the derivative is 1, so the gradient stays the same
+        return gradient
+
+
+class Tanh:
+    """Hyperbolic tangent activation function class."""
+
+    def __init__(self) -> None:
+        """Initialize the Hyperbolic tangent activation function."""
+        self.output_layer = None
+
+    def forward(self, input_layer: np.ndarray) -> np.ndarray:
+        """Forward pass for Hyperbolic tangent activation function.
+
+        Args:
+            input_layer: Input layer of the neural network.
+
+        Returns:
+            Output layer of the neural network.
+        """
+        # save tanh(x) for the backward pass
+        self.output_layer = np.tanh(input_layer)
+        return self.output_layer
+
+    def backward(self, gradient: np.ndarray) -> np.ndarray:
+        """Backward pass for Hyperbolic tangent activation function.
+
+        Args:
+            gradient: Gradient of the loss function with
+                respect to the output layer.
+
+        Returns:
+            Gradient of the loss function with
+                respect to the input layer.
+        """
+        if self.output_layer is None:
+            raise RuntimeError("Call forward before backward.")
+
+        # the derivative is 1 - tanh(x)**2
+        return gradient * (1.0 - self.output_layer**2)
