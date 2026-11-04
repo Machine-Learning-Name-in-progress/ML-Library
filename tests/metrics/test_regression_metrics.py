@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from regression_metrics import *
+from src.ml_library.metrics.regression_metrics import *
 
 y_true = [3.0, -1.0, 6.0, 7.0]
 y_pred = [2.0, 0.0, 6.0, 8.0]
