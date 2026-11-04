@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
-from classification_metrics import *
-from classification_metrics import _calculate_auc_integral
+from src.ml_library.metrics.classification_metrics import *
+from src.ml_library.metrics.classification_metrics import _calculate_auc_integral
 
 def test_confusion_matrix():
     y_pred = ['A','A','A','B','B','B','C','C']
