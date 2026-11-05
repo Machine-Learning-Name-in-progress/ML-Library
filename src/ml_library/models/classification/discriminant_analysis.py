@@ -60,22 +60,87 @@ class _BaseDiscriminant:
         return y_idx
 
     def decision(self, X: np.ndarray):
+        """
+        Returns the scores for each point, a higher score means 
+        it's more likely to belong to that class. Use `predict(X)`
+        to get the classes that maximizes these scores. The only
+        meaning this has is difference between classes, scores are 
+        not compatible between models.
+
+        Args:
+            X (array-like): Feature matrix with shape (n_samples, n_features).
+
+        Returns:
+            (np.ndarray): Matrix with shape (n_samples, n_classes). Column k holds
+                        the score of class self.classes[k].
+
+        Raises:
+            RuntimeError: If the model has not been fitted yet.
+        """
         raise NotImplementedError
 
     def predict(self, X: np.ndarray | list):
+        """
+        Predict the most probable class for each sample.
+
+        Args:
+            X (array-like): Feature matrix with shape (n_samples, n_features).
+
+        Returns:
+            (np.ndarray): Array with shape (n_samples,) holding the predicted label of
+                        each sample, taken from self.classes.
+
+        Raises:
+            RuntimeError: If the model has not been fitted yet.
+        """
         X = np.asarray(X)
 
         return self.classes[np.argmax(self.decision(X), axis=1)]
 
     def predict_probabilities(self, X: np.ndarray | list):
+        """
+        Estimate the posterior probability of each class for each sample.
+
+        Computed as a softmax over the scores from decision(). The class priors are
+        the class frequencies in the training data.
+
+        Args:
+            X (array-like): Feature matrix with shape (n_samples, n_features).
+
+        Returns:
+            (np.ndarray): Matrix with shape (n_samples, n_classes). Entry [i, k] is
+                        P(class self.classes[k] | X[i]); each row sums to 1.
+
+        Raises:
+            RuntimeError: If the model has not been fitted yet.
+        """
+
         X = np.asarray(X)
 
+        # Maybe we can put the softmax function on a library wide
+        #  module along sigmoid and other similar functions
         scores = self.decision(X)
         scores = scores - scores.max(axis=1, keepdims=True)
         exp = np.exp(scores)
         return exp / exp.sum(axis=1, keepdims=True)
 
 class QDA(_BaseDiscriminant):
+    """
+    Quadratic discriminant analysis class
+
+    Methods:
+        fit
+        predict
+        predict_probabilities
+        decision
+    
+    Properties:
+        covariances
+        means
+        priors
+        elements_per_class
+        classes
+    """
     def __init__(self, reg_param: float = 0) -> None:
         super().__init__(reg_param)
         self._covariances = None
@@ -87,6 +152,34 @@ class QDA(_BaseDiscriminant):
         return self._covariances
 
     def fit(self, X: np.ndarray | list, y: np.ndarray | list):
+        """
+        Fit the model: estimate the prior, mean and covariance matrix of each class.
+
+        Each class covariance is the sample covariance (divided by n_k - 1), shrunk
+        toward its diagonal by reg_param.
+
+        Args:
+            X (array-like): Training data with shape (n_samples, n_features).
+            y (array-like): Class label of each sample, with shape (n_samples,).
+                            Labels can be any sortable values (numbers or strings).
+
+        Returns:
+            QDA: The fitted model (self).
+
+        Raises:
+            ValueError: If X is not 2-D, y is not 1-D, their lengths differ, or a
+                        class has fewer than 2 samples.
+            numpy.linalg.LinAlgError: If a class covariance is singular, e.g. a class
+                        has no more samples than features with reg_param = 0, or a
+                        feature is constant within a class.
+
+        If an error is raised, the model must be fitted again before use because i was
+        lazy to treat the following edge case: you fit the model once without errors but
+        then you fit it again with a dataset with faulty parameters. Some of the self
+        variables are assigned again before it throws an error so you end up with self 
+        variables from the first dataset and the second dataset mixed in the same model,
+        and the predictions won't make sense.
+        """
         X = np.asarray(X)
         y = np.asarray(y)
 
@@ -115,6 +208,10 @@ class QDA(_BaseDiscriminant):
         Z = (X - mean) @ L_inv.T
         return np.sum(Z * Z, axis=1)
 
+    # i don't remember exactly the deduction i did to get
+    #  to these formulas because it was days ago, but i remember
+    #  i started from scikit-learn's documentation which had some
+    #  of the math
     def decision(self, X: np.ndarray | list):
         X = np.asarray(X)
 
@@ -127,6 +224,24 @@ class QDA(_BaseDiscriminant):
         return scores
 
 class LDA(_BaseDiscriminant):
+    """
+    Quadratic discriminant analysis class
+
+    Methods:
+        fit
+        predict
+        predict_probabilities
+        decision
+    
+    Properties:
+        coef
+        intercept
+        covariances
+        means
+        priors
+        elements_per_class
+        classes
+    """
     def __init__(self, reg_param: float = 0) -> None:
         super().__init__(reg_param)
         self._coef = None
@@ -152,6 +267,34 @@ class LDA(_BaseDiscriminant):
         return self._covariances
     
     def fit(self, X: np.ndarray | list, y: np.ndarray | list):
+        """
+        Fit the model: estimate the prior and mean of each class, and one covariance
+        matrix shared by all classes.
+
+        The shared covariance is the pooled within-class covariance (divided by
+        n_samples - n_classes), shrunk toward its diagonal by reg_param.
+
+        Args:
+            X (array-like): Training data with shape (n_samples, n_features).
+            y (array-like): Class label of each sample, with shape (n_samples,).
+                            Labels can be any sortable values (numbers or strings).
+
+        Returns:
+            LDA: The fitted model (self).
+
+        Raises:
+            ValueError: If X is not 2-D, y is not 1-D, their lengths differ, or there
+                        are not more samples than classes.
+            numpy.linalg.LinAlgError: If the pooled covariance is singular, e.g. a
+                        feature is constant within every class.
+
+        If an error is raised, the model must be fitted again before use because i was
+        lazy to treat the following edge case: you fit the model once without errors but
+        then you fit it again with a dataset with faulty parameters. Some of the self
+        variables are assigned again before it throws an error so you end up with self 
+        variables from the first dataset and the second dataset mixed in the same model,
+        and the predictions won't make sense.
+        """
         X = np.asarray(X)
         y = np.asarray(y)
 
