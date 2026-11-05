@@ -62,10 +62,14 @@ class _BaseDiscriminant:
     def decision(self, X: np.ndarray):
         raise NotImplementedError
 
-    def predict(self, X: np.ndarray):
+    def predict(self, X: np.ndarray | list):
+        X = np.asarray(X)
+
         return self.classes[np.argmax(self.decision(X), axis=1)]
 
-    def predict_probabilities(self, X: np.ndarray):
+    def predict_probabilities(self, X: np.ndarray | list):
+        X = np.asarray(X)
+
         scores = self.decision(X)
         scores = scores - scores.max(axis=1, keepdims=True)
         exp = np.exp(scores)
@@ -82,7 +86,10 @@ class QDA(_BaseDiscriminant):
             raise RuntimeError("Model is not yet fitted, fit first.")
         return self._covariances
 
-    def fit(self, X: np.ndarray, y: np.ndarray):
+    def fit(self, X: np.ndarray | list, y: np.ndarray | list):
+        X = np.asarray(X)
+        y = np.asarray(y)
+
         y_idx = self._fit_common(X,y)
 
         if (self.elements_per_class < 2).any():
@@ -108,7 +115,9 @@ class QDA(_BaseDiscriminant):
         Z = (X - mean) @ L_inv.T
         return np.sum(Z * Z, axis=1)
 
-    def decision(self, X):
+    def decision(self, X: np.ndarray | list):
+        X = np.asarray(X)
+
         n, K = X.shape[0], len(self.classes)
         scores = np.empty((n, K))
         for k in range(K):
@@ -137,12 +146,15 @@ class LDA(_BaseDiscriminant):
         return self._intercept
 
     @property
-    def covariances(self) -> list:
+    def covariances(self) -> np.ndarray:
         if self._covariances is None:
             raise RuntimeError("Model is not yet fitted, fit first.")
         return self._covariances
     
-    def fit(self, X, y):
+    def fit(self, X: np.ndarray | list, y: np.ndarray | list):
+        X = np.asarray(X)
+        y = np.asarray(y)
+
         y_idx = self._fit_common(X, y)
 
         if X.shape[0] <= self.classes.shape[0]:
@@ -155,10 +167,12 @@ class LDA(_BaseDiscriminant):
 
         self._covariances = cov
         self._coef = np.linalg.solve(cov, self.means.T).T
-        self._intercept = (-0.5 * np.sum(self._coef * self._means, axis=1) + np.log(self.priors))
+        self._intercept = (-0.5 * np.sum(self.coef * self.means, axis=1) + np.log(self.priors))
 
         return self
 
-    def decision(self, X):
+    def decision(self, X: np.ndarray | list):
+        X = np.asarray(X)
+
         return X @ self.coef.T + self._intercept
 
