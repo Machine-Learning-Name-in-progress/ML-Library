@@ -125,19 +125,23 @@ class Kmeans:
         return centroids
         
     def _find_nearest_centroid(self,centroids, points):
-        # We want ||x - c||^2 which is the squared distance to each centroid
+        # We want ||(x - r) - (c - r)||^2 which is the squared distance to each centroid where r is a reference value to avoid precision errors, this doesn't change the distance between the points. The mean is a good choice for r.
 
-        # We can factor it as ||x||^2 - 2xc + ||c||^2
+        # Let x_r = x - r and c_r = c - r
 
-        # Note that we can drop the ||x||^2 as it is the same number applied to each centroid, so we can just look for smallest number that (||c||^2 - 2xc) gives
+        # We can factor it as ||(x_r)||^2 - 2(x_r)(c_r) + ||c_r||^2
 
-        # x_sq = np.sum(points**2, axis=1, keepdims=True)
-        c_sq = np.sum(centroids**2, axis=1)
+        # Note that we can drop the ||x_r||^2 as it is the same number applied to each centroid, so we can just look for smallest number that (||c_r||^2 - 2(x_r)(c_r) gives
 
-        xc = points @ centroids.T
+        r = centroids.mean(axis=0)
+        c_r = centroids-r
+        x_r = points-r
+
+        c_sq = np.sum(c_r**2, axis=1)
+
+        xc = x_r @ c_r.T
 
         # We pick the maximum between the distance and zero, because for points very close to the centroids, we can have rounding errors and get negative distances
-        # distances_sq = np.maximum(x_sq - 2*xc + c_sq, 0) 
 
         scores = c_sq - 2*xc
         categories = np.argmin(scores, axis=1)
