@@ -11,6 +11,7 @@ class MLPRegressor:
         hidden_units: int = 8,
         learning_rate : float = 0.05,
         epochs: int = 500,
+        activation: type = Tanh
     ) -> None:
         #errors
         if not isinstance(hidden_units, (int, np.integer)) or hidden_units < 1:
@@ -24,8 +25,49 @@ class MLPRegressor:
         self.hidden_units = hidden_units
         self.learning_rate = learning_rate
         self.epochs = epochs
-        self.hidden: Dense | None = None
-        self._activation = Tanh()
+        self.activation = activation
+
+        self._activation = None
+        self._hidden: Dense | None = None
         self._output: Dense | None = None
+
+    def fit(self, X: np.ndarray, y: np.ndarray) -> "mlpregressor":
+
+        X = np.asarray(X, dtype=float)
+        y = np.asarray(y, dtype=float)
+
+        if X.ndim != 2 or X.shape[0] == 0 or X.shape[1] == 0:
+            raise ValueError("X must be a non_empty two dim array")
+        if y.ndim == 1:
+            y = y.reshape(-1,1)
+        if y.shape != (X.shape[0], 1):
+            raise ValueError("y must contain exactly one target per row of x")
+        if not np.isfinite(X).all() or not np.isinfinite(y).all():
+            raise ValueError("X and y must contain only finite value")
+
+        hidden = Dense(X.shape[1], self.hidden_units)
+        activation = self.activation()
+        output = Dense(self.hidden_units, 1)
+        loss = MSE()
+
+        for _ in range(self.epochs):
+            hidden_values = activation.forward(hidden.forward(X))
+            predictions = output.forward(hidden_values)
+            loss_value = loss.forward(y, predictions)
+            if not np.isfinite(loss_value):
+                raise FloatingPointError("training produced a not finite loss")
+            
+            gradient = output.backward(loss.backward())
+            hidden.backward(activation.backward(gradient))
+
+            for layer in (hidden, output):
+                layer.weights -= self.learning_rate * layer.grad_weights
+                layer.bias -= self.learning_rate * layer.grad_bias
+
+        self._hidden = hidden
+        self._activation = activation
+        self._output = output
+        return self
+
     
         
