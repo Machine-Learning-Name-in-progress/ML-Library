@@ -76,8 +76,6 @@ def same_partition(a: np.ndarray, b: np.ndarray) -> bool:
     pairs = set(zip(a.tolist(), b.tolist()))
     return len(pairs) == len(set(a.tolist())) == len(set(b.tolist()))
 
-# todo: center the clusters before calculating the mean() and then move offset them back to original
-@pytest.mark.xfail(reason="distance expansion loses precision far from the origin; needs centering")
 @pytest.mark.parametrize("seed", range(5))
 def test_translation_invariance(seed):
     X = _random.get_rng(seed).normal(size=(200, 2))
