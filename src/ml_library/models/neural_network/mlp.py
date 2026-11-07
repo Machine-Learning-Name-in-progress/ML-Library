@@ -18,7 +18,7 @@ class MLPRegressor:
             raise ValueError("hidden_units must be a positive integer")
         if not isinstance(epochs, (int, np.integer)) or epochs < 1:
             raise ValueError("epochs must be a positive integer")
-        if not np.isinfinite(learning_rate) or learning_rate <= 0:
+        if not np.isfinite(learning_rate) or learning_rate <= 0:
             raise ValueError("learning_rate must be finite and positive")
 
 
@@ -31,8 +31,8 @@ class MLPRegressor:
         self._hidden: Dense | None = None
         self._output: Dense | None = None
 
-    def fit(self, X: np.ndarray, y: np.ndarray) -> "mlpregressor":
-
+    def fit(self, X: np.ndarray, y: np.ndarray) -> "MLPRegressor":
+        """train on a two dimensional feature array with one  target per row"""
         X = np.asarray(X, dtype=float)
         y = np.asarray(y, dtype=float)
 
@@ -42,7 +42,7 @@ class MLPRegressor:
             y = y.reshape(-1,1)
         if y.shape != (X.shape[0], 1):
             raise ValueError("y must contain exactly one target per row of x")
-        if not np.isfinite(X).all() or not np.isinfinite(y).all():
+        if not np.isfinite(X).all() or not np.isfinite(y).all():
             raise ValueError("X and y must contain only finite value")
 
         hidden = Dense(X.shape[1], self.hidden_units)
@@ -69,5 +69,15 @@ class MLPRegressor:
         self._output = output
         return self
 
-    
+    def predict(self, X: np.ndarray) -> np.ndarray:
+        """return onde prediction per row as a one dimensional array"""
+        if self._hidden is None or self._activation is None or self._output is None:
+            raise RuntimeError("call fit before predict.")
+
+        X = np.asarray(X, dtype=float)
+        if X.ndim != 2 or X.shape[1] != self._hidden.weights.shape[0]:
+            raise ValueError("X must have the same number of features as during fit")
+
+        hidden_values = self._activation.forward(self._hidden.forward(X))
+        return self._output.forward(hidden_values).ravel()
         
