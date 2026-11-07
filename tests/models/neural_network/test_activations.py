@@ -1,7 +1,12 @@
 """Test module for activation functions in the neural network models."""
 
 import numpy as np
-from ml_library.models.neural_network.activations import ReLU, Sigmoid, Linear, Tanh
+from ml_library.models.neural_network.activations import (
+    Linear,
+    ReLU,
+    Sigmoid,
+    Tanh,
+)
 
 
 def test_relu_forward():
@@ -74,6 +79,7 @@ def test_sigmoid_forward_stability():
     result = sigmoid.forward(x)
     expected = np.array([0.0, 1.0])
     np.testing.assert_array_almost_equal(result, expected, decimal=7)
+
 
 def test_linear_forward_and_backward():
     activation = Linear()

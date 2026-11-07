@@ -33,10 +33,9 @@ class ReLU:
             Gradient of the loss function with
                 respect to the input layer.
         """
-
         if self.input_layer is None:
             raise RuntimeError("Call forward before backward.")
-        
+
         return gradient * (self.input_layer > 0)
 
 
@@ -78,7 +77,6 @@ class Sigmoid:
             Gradient of the loss function with
                 respect to the input layer.
         """
-
         if self.output_layer is None:
             raise RuntimeError("Call forward before backward.")
 
@@ -110,7 +108,6 @@ class Linear:
             Gradient of the loss function with
                 respect to the input layer.
         """
-
         # the derivative is 1, so the gradient stays the same
         return gradient
 
