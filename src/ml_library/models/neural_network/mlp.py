@@ -6,7 +6,20 @@ from .losses import MSE
 from .optimizers import SGD
 
 class MLPRegressor:
-    """Fit  a neural network with onde hidden layer using batch gradient descent"""
+    """neural network for a single output regression with one hidden layes
+    
+    the hidden-layer activation is configurable,
+    the output layer is lenar and
+    training uses full-batch gradient descent to minimize mean squared error.
+    
+    Args:
+        hidden_units: number of neurons in the hidden layer,
+        learning_rate: step used ny the optimizer,
+        epochs: number of passes over the training data,
+        activation: hidden-layer activation class (ex.: Tanh, ReLU...).
+            Pass the class so fit can create a fresh istance for each traininf run
+    """
+
     def __init__(
         self, 
         hidden_units: int = 8,
@@ -33,7 +46,16 @@ class MLPRegressor:
         self._output: Dense | None = None
 
     def fit(self, X: np.ndarray, y: np.ndarray) -> "MLPRegressor":
-        """train on a two dimensional feature array with one  target per row"""
+        """train a new network on the given samples
+
+        Args:
+            X: deature matrix of shape (n_samples, n_features).
+            y: regression targets of shape (n_samples,) or (n_samples, 1).
+
+        Returns:
+            The fitted model.
+        """
+
         X = np.asarray(X, dtype=float)
         y = np.asarray(y, dtype=float)
 
@@ -75,7 +97,18 @@ class MLPRegressor:
         return self
 
     def predict(self, X: np.ndarray) -> np.ndarray:
-        """return onde prediction per row as a one dimensional array"""
+        """predict one value per sample using the fitted network.
+
+        Args:
+            X: feature matrix with the same number of columns used during fit.
+
+        Returns:
+            a one-dimensional array of shape (n_samples,)
+
+        Raises:
+            RuntimeError: if the model has not been fitted,
+            ValueError: if X has the wrong shape or contains non-finite values.
+        """
         if self._hidden is None or self._activation is None or self._output is None:
             raise RuntimeError("call fit before predict.")
 

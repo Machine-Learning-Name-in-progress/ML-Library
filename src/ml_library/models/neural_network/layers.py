@@ -3,7 +3,7 @@ import numpy as np
 from ml_library.utils._random import get_rng
 
 class Dense:
-    """Fully conected neural network layer."""
+    """Fully connected neural network layer."""
 
     def __init__(self, n_inputs: int, n_outputs: int) -> None:
         """Initialize weights, biases, and gradient storage."""
@@ -43,6 +43,22 @@ class Dense:
         return input_layer @ self.weights + self.bias
 
     def backward(self, gradient: np.ndarray) -> np.ndarray:
+        """compute parameter gradients and propagate the gradient to the input
+        
+            kepping the weight and bias gradients in grad_weights and grad_bias
+            uses the input saved by the most recent call to forward
+        
+            Args:
+                gradient: Gradient with respect to the layer output, with shape
+                    (batch_size, n_outputs).
+        
+            Returns:
+                gradient with respect to the layer input [with shape
+                (batch_size, n_inputs)].
+        
+            Raises:
+                RuntimeError: if `forward` has not been called
+            """
         if self.input_layer is None:
             raise RuntimeError("Call forward before backward.")
         # Compute gradient for the trainable parameters.

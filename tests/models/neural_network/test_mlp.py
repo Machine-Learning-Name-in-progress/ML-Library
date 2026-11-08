@@ -24,19 +24,17 @@ def test_mlp_learns_regression(monkeypatch, activation, column_target):
     assert predictions.shape == y_test.shape
     assert np.mean((predictions - y_test) ** 2) < 0.02
 
-
-#reproducibility test
 def test_mlp_is_reproducible(monkeypatch):
+    """Verify that repeated fits with the same 
+        seed produce matching predictions."""
     X = np.linspace(-1, 1, 67).reshape(-1,1)
     y = 2 * X[:, 0] + 1
 
     monkeypatch.setattr(_random, "_rng", np.random.default_rng(42))
     ref = MLPRegressor().fit(X, y).predict(X) #reference
 
-    monkeypatch.setattr(_random, "_rng", np.random.default_rng(42))
-    second_model = MLPRegressor().fit(X, y)
-
     for i in range(2, 62):
+        # reset the rng before each fit then every model starts with the same weights
         monkeypatch.setattr(_random, "_rng", np.random.default_rng(42))
         predictions = MLPRegressor().fit(X, y).predict(X)
 

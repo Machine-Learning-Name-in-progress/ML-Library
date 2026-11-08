@@ -176,8 +176,10 @@ def test_mse_batch_2d():
     np.testing.assert_equal(gradient.shape, (4, 2))
 
 def test_mse_reject_different_shapes():
+    # arrange:
     y_true = np.array([1.0, 2.0])
     y_pred = np.array([[1.0], [2.0]])
 
+    # act and assert:
     with pytest.raises(ValueError, match="same shape"):
         MSE().forward(y_true, y_pred)
