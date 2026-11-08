@@ -21,6 +21,9 @@ class MSE:
         Returns:
             MSE loss value.
         """
+        if y_real.shape != y_pred.shape:
+            raise ValueError("y_real and y_pred must have the same shape.")
+        
         self.y_real = y_real
         self.y_pred = y_pred
         return float(np.mean((self.y_real - self.y_pred) ** 2))
@@ -57,6 +60,10 @@ class BinaryCrossEntropy:
         Returns:
             Binary Cross Entropy loss value.
         """
+
+        if y_real.shape != y_pred.shape:
+            raise ValueError("y_real and y_pred must have the same shape.")
+        
         self.y_real = y_real
         self.y_pred = y_pred
         y_pred_clipped = np.clip(y_pred, self.eps, 1.0 - self.eps)

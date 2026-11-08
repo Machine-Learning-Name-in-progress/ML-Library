@@ -14,8 +14,8 @@ class Optimizer(ABC):
         Args:
             lr: learning rate. Must be positive.
         """
-        if lr <= 0:
-            raise ValueError("Learning rate must be positive")
+        if not np.isfinite(lr) or lr <= 0:
+            raise ValueError("Learning rate must be finite and positive.")
         self.lr = lr
 
     @abstractmethod
@@ -68,7 +68,7 @@ class SGD(Optimizer):
             momentum: momentum factor in range [0, 1).
         """
         super().__init__(lr=lr)
-        if momentum < 0 or momentum >= 1.0:
+        if not (0.0 <= momentum < 1.0):
             raise ValueError("Momentum must be in range [0, 1).")
 
         self.momentum = momentum
@@ -130,12 +130,12 @@ class Adam(Optimizer):
             beta1: decay rate for first moment.
             beta2: decay rate for second moment.
             eps: small constant to avoid division by zero.
-        """
+        v"""
         super().__init__(lr=lr)
         if not (0.0 <= beta1 < 1.0) or not (0.0 <= beta2 < 1.0):
             raise ValueError("Betas must be in range [0, 1).")
-        if eps <= 0.0:
-            raise ValueError("Epsilon must be positive.")
+        if not np.isfinite(eps) or eps <= 0.0:
+            raise ValueError("Epsilon must be finite and positive.")
 
         self.beta1 = beta1
         self.beta2 = beta2
@@ -210,8 +210,9 @@ class AdamW(Adam):
             weight_decay: weight decay factor.
         """
         super().__init__(lr=lr, beta1=beta1, beta2=beta2, eps=eps)
-        if weight_decay < 0.0:
-            raise ValueError("Weight decay must be non-negative.")
+
+        if weight_decay < 0.0 or not np.isfinite(weight_decay):
+            raise ValueError("Weight decay must be non-negative and finite.")
 
         self.weight_decay = weight_decay
 

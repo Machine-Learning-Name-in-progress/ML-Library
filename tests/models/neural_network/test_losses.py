@@ -1,6 +1,8 @@
 """Test module for loss functions on neural networks."""
 
 import numpy as np
+import pytest
+
 from ml_library.models.neural_network.losses import (
     MSE,
     BinaryCrossEntropy,
@@ -172,3 +174,10 @@ def test_mse_batch_2d():
         gradient, expected_gradient, decimal=7
     )
     np.testing.assert_equal(gradient.shape, (4, 2))
+
+def test_mse_reject_different_shapes():
+    y_true = np.array([1.0, 2.0])
+    y_pred = np.array([[1.0], [2.0]])
+
+    with pytest.raises(ValueError, match="same shape"):
+        MSE().forward(y_true, y_pred)

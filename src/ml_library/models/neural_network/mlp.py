@@ -3,6 +3,7 @@ import numpy as np
 from .activations import Tanh
 from .layers import Dense
 from .losses import MSE
+from .optimizers import SGD
 
 class MLPRegressor:
     """Fit  a neural network with onde hidden layer using batch gradient descent"""
@@ -49,6 +50,8 @@ class MLPRegressor:
         activation = self.activation()
         output = Dense(self.hidden_units, 1)
         loss = MSE()
+        optimizer = SGD(lr=self.learning_rate)
+        layers = [hidden, output]
 
         for _ in range(self.epochs):
             hidden_values = activation.forward(hidden.forward(X))
@@ -60,10 +63,12 @@ class MLPRegressor:
             gradient = output.backward(loss.backward())
             hidden.backward(activation.backward(gradient))
 
-            for layer in (hidden, output):
-                layer.weights -= self.learning_rate * layer.grad_weights
-                layer.bias -= self.learning_rate * layer.grad_bias
+            optimizer.step(layers)
 
+            for layer in layers:
+                if not np.isfinite(layer.weights).all() or not np.isfinite(layer.bias).all():
+                    raise FloatingPointError("training produced non-finite parameters")
+        
         self._hidden = hidden
         self._activation = activation
         self._output = output
@@ -78,6 +83,8 @@ class MLPRegressor:
         if X.ndim != 2 or X.shape[1] != self._hidden.weights.shape[0]:
             raise ValueError("X must have the same number of features as during fit")
 
+        if not np.isfinite(X).all():
+            raise ValueError("X must contain only finite values")
         hidden_values = self._activation.forward(self._hidden.forward(X))
         return self._output.forward(hidden_values).ravel()
         
