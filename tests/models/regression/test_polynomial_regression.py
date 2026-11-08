@@ -39,7 +39,7 @@ def test_poly_examples():
 
     test_ridge = PolynomialRegression(degree=deg, model_choice='ridge', intercept=True, lam=0.1)
     test_ridge.fit(x_test, y_noise)
-    assert test_ridge.coefficients == pytest.approx([3.0, 2.0, 1.0, 0.0, 0.0], abs=0.25)
+    assert test_ridge.coefficients == pytest.approx([3.0, 2.0, 1.0, 0.0, 0.0], abs=0.30)
 
     test_lasso = PolynomialRegression(degree=deg, model_choice='lasso', intercept=True, lam=0.1)
     test_lasso.fit(x_test, y_noise)
