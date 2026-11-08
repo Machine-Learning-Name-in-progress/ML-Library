@@ -28,29 +28,33 @@ def one_hot(
         if not columns:
             raise ValueError("No categorical columns found to be encoded")
 
-    # Validate columns
+    # Validate columns given by the user
     else:
         for column in columns:
+            # Validate column (existing)
             if column not in set(data.columns):
                 raise ValueError(f"'{column}' column does not exist on dataframe")
 
+            # Validate column (is it categorical?)
+            if (
+                df[[column]]
+                .select_dtypes(include=["object", "string", "category"])
+                .empty
+            ):
+                raise TypeError(
+                    f"{column} is not a categorical column, and cannot be encoded."
+                )
+
     # For each categorical column...
     for column in columns:
-        # Validate current column (is it categorical?)
-        if df[[column]].select_dtypes(include=["object", "string", "category"]).empty:
-            raise TypeError(
-                f"{column} is not a categorical column, and cannot be encoded."
-            )
+        # Create a list with all categories of current column
+        classes = list(df[column].unique())
+        for classi in classes:
+            # Create a binary (0,1) column for each category of current column
+            df[f"{column}_{classi}_onehot"] = (df[column] == classi).astype(int)
 
-        else:
-            # Create a list with all categories of current column
-            classes = list(df[column].unique())
-            for classi in classes:
-                # Create a binary (0,1) column for each category of current column
-                df[f"{column}_{classi}_onehot"] = (df[column] == classi).astype(int)
-
-            # Drop the original column if drop == True
-            if drop:
-                df = df.drop(columns=[column])
+        # Drop the original column if drop == True
+        if drop:
+            df = df.drop(columns=[column])
 
     return df
