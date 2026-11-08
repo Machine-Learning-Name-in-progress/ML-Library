@@ -155,6 +155,8 @@ class QDA(_BaseDiscriminant):
     def __init__(self, reg_param: float = 0) -> None:
         super().__init__(reg_param)
         self._covariances = None
+        self._L_inv = []
+        self._log_det = []
 
     @property
     def covariances(self) -> list:
@@ -197,9 +199,6 @@ class QDA(_BaseDiscriminant):
 
         self._covariances = []
 
-        self._L_inv = []
-        self._log_det = []
-
         for k in range(len(self.classes)):
             Xk = X[y_idx == k] - self.means[k]
             cov = self._regularize(Xk.T @ Xk / (len(Xk) - 1))
@@ -219,6 +218,18 @@ class QDA(_BaseDiscriminant):
     def decision(self, X: np.ndarray | list):
         X = np.asarray(X)
 
+        if X.ndim != 2:
+            raise ValueError(
+                f"X must be 2-dimensional (n_samples, n_features). got shape {X.shape}." +
+                "Use X.reshape(1,-1) for a single point or X.reshape(-1, 1) for 1-D data."
+            )
+
+        if X.shape[1] != self.means.shape[1]:
+            raise ValueError(
+                "Number of features of X must match the number of features from "
+                f"training data. Got {X.shape[1]} expected {self.means.shape}"
+            )
+        
         n, K = X.shape[0], len(self.classes)
         scores = np.empty((n, K))
         for k in range(K):
@@ -320,5 +331,17 @@ class LDA(_BaseDiscriminant):
 
     def decision(self, X: np.ndarray | list):
         X = np.asarray(X)
+
+        if X.ndim != 2:
+            raise ValueError(
+                f"X must be 2-dimensional (n_samples, n_features). got shape {X.shape}." +
+                "Use X.reshape(1,-1) for a single point or X.reshape(-1, 1) for 1-D data."
+            )
+
+        if X.shape[1] != self.means.shape[1]:
+            raise ValueError(
+                "Number of features of X must match the number of features from "
+                f"training data. Got {X.shape[1]} expected {self.means.shape}"
+            )
 
         return X @ self.coef.T + self._intercept
