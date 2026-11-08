@@ -36,6 +36,15 @@ class KNN:
         x = np.asarray(x)
         y = np.asarray(y)
 
+        if x.ndim != 2:
+            raise ValueError(
+                f"features (x) must have x.ndim == 2 (current: x.ndim =={x.ndim})"
+            )
+        elif y.ndim != 1:
+            raise ValueError(
+                f"classes (y) must have y.ndim == 1 (current: x.ndim =={y.ndim})"
+            )
+
         # Dimension validate
         if x.shape[0] != y.shape[0]:
             raise ValueError(
@@ -98,6 +107,16 @@ class KNN:
 
         # Convert lists and DataFrames to NumPy arrays (iterate over rows, not columns)
         x_new = np.asarray(x_new)
+
+        if x_new.ndim != 2:
+            raise ValueError(
+                f"features must have ndim == 2 (current ndim == {x_new.ndim})"
+            )
+
+        if x_new.shape[1] != self._x_train.shape[1]:
+            raise ValueError(
+                f"Predict mush have the same number of features than the training (training: {self._x_train.shape[1]} ; given: {x_new.shape[1]})"
+            )
 
         predictions = [self._predict_point(sample) for sample in x_new]
 
