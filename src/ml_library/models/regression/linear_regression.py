@@ -1,6 +1,6 @@
 import numpy as np
 
-class _linear_regression:
+class _LinearRegression:
     """A private base class for linear regression.
 
     Add the predict method and some metrics for linear regression.
@@ -10,8 +10,8 @@ class _linear_regression:
         intercept (float, optional): The value of the intercept coefficient.
     """
     def __init__(self):
-        self._coef = []
-        self._intercept = 0.0
+        self._coef = None
+        self._intercept = None
         return
 
     @property
@@ -21,6 +21,8 @@ class _linear_regression:
         Returns:
             np.ndarray: The regression coefficients.
         """
+        if self._coef is None:
+            raise RuntimeError("Model is not yet fitted, fit first.")
         return self._coef
 
     @property
@@ -30,6 +32,8 @@ class _linear_regression:
         Returns:
             float: The regression intercept coefficient.
         """
+        if self._intercept is None:
+            raise RuntimeError("Model is not yet fitted, fit first.")
         return self._intercept
     
     def fit(self):
@@ -114,13 +118,15 @@ class _linear_regression:
 
         y_hat = self.predict(X_r)
 
+        if(np.sum((y_r-np.mean(y_r))**2)==0):
+            raise ValueError("R^2 metric is not well defined when the real target values (y) are constant.")
         r2 = 1 - (np.sum((y_r-y_hat)**2))/(np.sum((y_r-np.mean(y_r))**2))
         return r2
 
     def _exceptions(self, X: np.ndarray, y: np.ndarray) -> None:
         """Private method to log internal exceptions"""
-        if(self._coef==[]):
-            raise ValueError("Model is not yet fitted, call .fit() first.")
+        if self._coef is None:
+            raise RuntimeError("Model is not yet fitted, call .fit() first.")
         
         if not np.issubdtype(X.dtype, np.number):
             raise TypeError(f"Invalid data type: Expected feature matrix (X) to have a numeric data type, got '{X.dtype}'.")
@@ -141,10 +147,10 @@ class _linear_regression:
             raise ValueError("Dimension mismatch: The number of columns in feature matrix (X) must equal the number of model coefficients.")
         return
 
-class ordinary_least_squares(_linear_regression):
+class OrdinaryLeastSquares(_LinearRegression):
     """A public class for ordinary least squares linear regression.
 
-    This class inherits the private class _linear_regression and add the fit method for ordinary least squares regression.
+    This class inherits the private class _LinearRgerssion and add the fit method for ordinary least squares regression.
     """
     def fit(self, X: np.ndarray, y: np.ndarray, intercept: bool = True) -> None:
         """Fit the ordinary least squares model.
@@ -210,10 +216,10 @@ class ordinary_least_squares(_linear_regression):
             raise ValueError("Normal equations not solvable: The design matrix must have full column rank.")
         return
 
-class ridge(_linear_regression):
+class Ridge(_LinearRegression):
     """A public class for ridge linear regression.
 
-    This class inherits the private class _linear_regression and add the fit method for ridge regression.
+    This class inherits the private class _LinearRgerssion and add the fit method for ridge regression.
     """
     def fit(self, X: np.ndarray, y: np.ndarray, lam: float, intercept: bool = True) -> None:
         """Fit the ridge model.
@@ -284,7 +290,7 @@ class ridge(_linear_regression):
         if not np.issubdtype(y.dtype, np.number):
             raise TypeError(f"Invalid data type: Expected target vector (y) to have a numeric data type, got '{y.dtype}'.")
 
-        if not isinstance(lam, (float,int)):
+        if (not isinstance(lam, (float,int))) or isinstance(lam, bool):
             raise TypeError(f"Invalid data type: Expected lambda hyperparameter (lam) to have a float data type, got '{type(lam).__name__}'.")
 
         if not isinstance(intercept, bool):
@@ -303,10 +309,10 @@ class ridge(_linear_regression):
             raise ValueError("Dimension mismatch: The number of rows in feature matrix (X) must equal the number of samples in the target vector (y).")
         return
 
-class lasso(_linear_regression):
+class Lasso(_LinearRegression):
     """A public class for lasso linear regression.
 
-    This class inherits the private class _linear_regression and add the fit method for lasso regression.
+    This class inherits the private class _LinearRgerssion and add the fit method for lasso regression.
     """
     def fit(self, X: np.ndarray, y: np.ndarray, lam: float, intercept: bool = True, eps: float = 1e-4, max_iter: int = 1e4) -> None:
         """Fit the lasso model.
@@ -346,7 +352,6 @@ class lasso(_linear_regression):
 
         if(intercept):
             self._intercept = np.mean(y_t) - np.mean(X_t, axis=0) @ beta
-            self._intercept = self._intercept
         return
 
     def _coordinate_descent(self, X: np.ndarray, y: np.ndarray, lam: float, eps: float, max_iter: int) -> np.ndarray:
@@ -370,7 +375,7 @@ class lasso(_linear_regression):
         beta_old = np.ones(p)
         iter = 0
 
-        while(np.sum(np.abs(beta-beta_old))>eps or iter<max_iter):
+        while(np.sum(np.abs(beta-beta_old))>eps and iter<max_iter):
             beta_old = beta.copy()
             for j in range(p):
                 r_j = y - X @ beta + X[:,j]*beta[j]
@@ -410,16 +415,16 @@ class lasso(_linear_regression):
         if not np.issubdtype(y.dtype, np.number):
             raise TypeError(f"Invalid data type: Expected target vector (y) to have a numeric data type, got '{y.dtype}'.")
 
-        if not isinstance(lam, (float,int)):
+        if (not isinstance(lam, (float,int))) or isinstance(lam, bool):
             raise TypeError(f"Invalid data type: Expected lambda hyperparameter (lam) to have a float data type, got '{type(lam).__name__}'.")
 
         if not isinstance(intercept, bool):
             raise TypeError(f"Invalid data type: Expected intercept flag (intercept) to have a bool data type, got '{type(intercept).__name__}'.")
 
-        if not isinstance(eps, (float, int)):
+        if (not isinstance(eps, (float, int))) or isinstance(eps, bool):
             raise TypeError(f"Invalid data type: Expected epsilon convergence parameter (eps) to have a float data type, got '{type(eps).__name__}'.")
 
-        if (not isinstance(max_iter, int)) and (not(isinstance(max_iter, float) and max_iter.is_integer())):
+        if ((not isinstance(max_iter, int)) or isinstance(x, bool)) and (not(isinstance(max_iter, float) and max_iter.is_integer())):
             raise TypeError(f"Invalid data type: Expected maximum of iterations convergence parameter (max_iter) to have a int data type, got '{type(max_iter).__name__}'.")
 
         if(lam<0):
