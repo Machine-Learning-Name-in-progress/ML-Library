@@ -3,10 +3,13 @@ import warnings
 import numpy as np
 
 
-class logistic_regression:
+class LogisticRegression:
     """
-    Logistic regression classification model for two classes (0 and 1), trained by
-    gradient ascent on the log-likelihood.
+    Logistic regression classification model for two classes, trained by gradient
+    ascent on the log-likelihood.
+
+    The labels can be any two values (e.g. 0/1, -1/1, "no"/"yes"). They are sorted
+    (numerically or alphabetically) and the second one is the positive class.
 
     Args:
         learn_rate (float): step size of gradient in each update. Larger values converge
@@ -22,25 +25,30 @@ class logistic_regression:
     def __init__(
         self, learn_rate: float = 0.5, max_iter: int = 5000, tol: float = 1e-6
     ):
-        # learn_rate validate
-        if not isinstance(learn_rate, (int, float)):
+        # learn_rate validate (bool is a subclass of int, so it is rejected explicitly)
+        if isinstance(learn_rate, bool) or not isinstance(
+            learn_rate, (int, float, np.integer, np.floating)
+        ):
             raise TypeError("'learn_rate' must be a number")
         if learn_rate <= 0:
             raise ValueError("'learn_rate' must be greater than 0")
 
         # max_iter validate
-        if not isinstance(max_iter, (int, np.integer)):
+        if isinstance(max_iter, bool) or not isinstance(max_iter, (int, np.integer)):
             raise TypeError("'max_iter' must be an integer")
         if max_iter <= 0:
             raise ValueError("'max_iter' must be greater than 0")
 
         # tol validate
-        if not isinstance(tol, (int, float)):
+        if isinstance(tol, bool) or not isinstance(
+            tol, (int, float, np.integer, np.floating)
+        ):
             raise TypeError("'tol' must be a number")
         if tol <= 0:
             raise ValueError("'tol' must be greater than 0")
 
         self._beta = None  # Can be set using fit()
+        self._classes = None  # Can be set using fit(): the two sorted labels
         self._learn_rate = learn_rate
         self._max_iter = max_iter
         self._tol = tol
@@ -68,8 +76,6 @@ class logistic_regression:
         Computes the value of sigmoid function:
         sig(z) = 1 / (1 + exp(-z))
 
-        for given values.
-
         Args:
             z (np.ndarray): compute sig(z) for each z in array
 
@@ -81,15 +87,16 @@ class logistic_regression:
 
     def predict_probabilities(self, x):
         """
-        Predict the probability of each class (0 and 1) for x using the current beta
+        Predict the probability of each class for x using the current beta
         coefficients
 
         Args:
             x (np.ndarray): Feature matrix with shape (n_samples, n_features)
 
         Returns:
-            (np.ndarray): Matrix with shape (n_samples, 2). Column 0 has the estimated
-                          probability of class 0, and column 1 of class 1
+            (np.ndarray): Matrix with shape (n_samples, 2). Column k has the estimated
+                          probability of the k-th sorted label (column 1 is the
+                          positive class)
         """
         # Validate training before predict
         if self._beta is None:
@@ -111,21 +118,36 @@ class logistic_regression:
 
         Args:
             x_train (np.ndarray): Matrix of training with shape (n_samples, n_features)
-            y_train (np.ndarray): Correct results (0 or 1) for each sample of x_train
+            y_train (np.ndarray): Labels with shape (n_samples). Must have exactly two
+                                  distinct values
         """
 
         x_train = np.asarray(x_train)
         y_train = np.asarray(y_train)
 
-        # If we have classes other than (0, 1)
-        if False in ((y_train == 0) | (y_train == 1)):
-            raise ValueError("Logistic regression only works with two classes 0/1")
+        # y must be a vector with shape (n_samples)
+        if y_train.ndim != 1:
+            raise ValueError("y must be a 1D array with shape (n_samples)")
 
         # Validate dimensions of x and y (same number of rows)
         if x_train.shape[0] != y_train.shape[0]:
             raise ValueError(
                 "Each point from x needs a result in y: same number of rows"
             )
+
+        # Sorted labels, and the position of each y in it: y_train = classes[y_index]
+        classes, y_index = np.unique(y_train, return_inverse=True)
+
+        # Logistic regression works with exactly two classes
+        if len(classes) != 2:
+            raise ValueError(
+                f"Logistic regression needs exactly 2 classes ({len(classes)} given)"
+            )
+
+        self._classes = classes
+
+        # Train with 0 for classes[0] and 1 for classes[1]
+        y_train = y_index
 
         x_train = self._add_ones_column(x_train)
         N, p = x_train.shape
@@ -164,9 +186,9 @@ class logistic_regression:
 
     def predict(self, x_new):
         """
-        Predict the class (0 or 1) for new points. A point is classified as 1 when its
-        estimated probability of class 1, given by predict_probabilities() is greater
-        than 0.5, and classified as 0 otherwise.
+        Predict the label for new points. A point receives the positive label
+        (classes[1]) when its estimated probability, given by predict_probabilities(),
+        is greater than 0.5, and the other label (classes[0]) otherwise.
 
         Args:
             x_new (np.ndarray): Feature matrix with shape (n_new_samples, n_features)
@@ -175,7 +197,7 @@ class logistic_regression:
             (np.ndarray): array with predicted labels for each sample of x_new
         """
 
-        # Probability of class 1 (column 1)
+        # Probability of the positive class (column 1)
         probs = self.predict_probabilities(x_new)[:, 1]
 
         # According the plug-in method: select the most probable class
@@ -184,4 +206,5 @@ class logistic_regression:
 
         prediction = prediction.astype(int)
 
-        return prediction
+        # Index 0 or 1 -> original label
+        return self._classes[prediction]
