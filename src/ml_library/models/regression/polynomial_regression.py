@@ -1,7 +1,7 @@
 import numpy as np
-from .linear_regression import ordinary_least_squares, ridge, lasso
+from .linear_regression import OrdinaryLeastSquares, Ridge, Lasso
 
-class polynomial_regression:
+class PolynomialRegression:
     """
     A public class for polynomial regression using OLS, Ridge, or Lasso.
 
@@ -37,11 +37,11 @@ class polynomial_regression:
         self.max_iter = max_iter
 
         if model_choice == 'ols':
-            self.model = ordinary_least_squares()
+            self.model = OrdinaryLeastSquares()
         elif model_choice == 'ridge':
-            self.model = ridge()
+            self.model = Ridge()
         elif model_choice == 'lasso':
-            self.model = lasso()
+            self.model = Lasso()
         
     def _exceptions_init(self, degree: int, model_choice: str, intercept: bool, lam: float, eps: float, max_iter: int) -> None:
         """
