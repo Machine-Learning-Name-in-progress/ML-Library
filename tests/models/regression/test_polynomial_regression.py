@@ -1,9 +1,8 @@
 import pytest
 import numpy as np
 from ml_library.models.regression.polynomial_regression import PolynomialRegression
+from ml_library.utils._random import get_rng
 
-# TODO: unify global seeds
-np.random.seed(67)
 atol = 1e-6
 
 def test_poly_design_matrix():
@@ -21,7 +20,8 @@ def test_poly_design_matrix():
 def test_poly_examples():
     x_test = np.array([-2, -1, 0, 1, 2])
     y_test = 3 + 2*x_test + x_test**2
-    noise = np.random.normal(0.0, 0.1, size=len(x_test))
+    rng = get_rng(67)
+    noise = rng.normal(0.0, 0.1, size=len(x_test))
     y_noise = y_test + noise
     deg = 4
 
