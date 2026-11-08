@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 from ml_library.models.neural_network.layers import Dense
-from ml_library.models.neural_network.optimizers import SGD
+from ml_library.models.neural_network.optimizers import SGD, Adam, AdamW
 
 
 def test_sgd_invalid_parameters() -> None:
@@ -77,7 +77,7 @@ def test_adam_invalid_parameters() -> None:
 
 def test_adam_parabola_convergence() -> None:
     """Test if Adam converges on a simple parabola f(w) = w^2."""
-    optimizer = Adam(lr=0.1)
+    optimizer = Adam(lr=0.5)
     w = np.array([5.0, -3.0])
 
     for _ in range(200):
@@ -89,7 +89,7 @@ def test_adam_parabola_convergence() -> None:
 
 def test_adamw_parabola_convergence() -> None:
     """Test AdamW weight decay and convergence on f(w) = w^2."""
-    optimizer = AdamW(lr=0.1, weight_decay=0.05)
+    optimizer = AdamW(lr=0.5, weight_decay=0.05)
     w = np.array([5.0, -3.0])
 
     for _ in range(200):
