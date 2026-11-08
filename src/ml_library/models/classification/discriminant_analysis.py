@@ -172,13 +172,6 @@ class QDA(_BaseDiscriminant):
             numpy.linalg.LinAlgError: If a class covariance is singular, e.g. a class
                         has no more samples than features with reg_param = 0, or a
                         feature is constant within a class.
-
-        If an error is raised, the model must be fitted again before use because i was
-        lazy to treat the following edge case: you fit the model once without errors but
-        then you fit it again with a dataset with faulty parameters. Some of the self
-        variables are assigned again before it throws an error so you end up with self 
-        variables from the first dataset and the second dataset mixed in the same model,
-        and the predictions won't make sense.
         """
         X = np.asarray(X)
         y = np.asarray(y)
@@ -225,7 +218,7 @@ class QDA(_BaseDiscriminant):
 
 class LDA(_BaseDiscriminant):
     """
-    Quadratic discriminant analysis class
+    Linear discriminant analysis class
 
     Methods:
         fit
@@ -287,13 +280,6 @@ class LDA(_BaseDiscriminant):
                         are not more samples than classes.
             numpy.linalg.LinAlgError: If the pooled covariance is singular, e.g. a
                         feature is constant within every class.
-
-        If an error is raised, the model must be fitted again before use because i was
-        lazy to treat the following edge case: you fit the model once without errors but
-        then you fit it again with a dataset with faulty parameters. Some of the self
-        variables are assigned again before it throws an error so you end up with self 
-        variables from the first dataset and the second dataset mixed in the same model,
-        and the predictions won't make sense.
         """
         X = np.asarray(X)
         y = np.asarray(y)
