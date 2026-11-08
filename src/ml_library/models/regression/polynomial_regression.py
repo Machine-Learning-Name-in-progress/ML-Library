@@ -55,7 +55,7 @@ class polynomial_regression:
             eps (float): Convergence tolerance.
             max_iter (int): Maximum number of iterations.
         """
-        if not isinstance(degree, int):
+        if not isinstance(degree, int) or isinstance(degree, bool):
             raise TypeError(f"Invalid data type: Expected polynomial degree for regression (degree) to have an int data type, got '{type(degree).__name__}'")
         
         if degree <= 0:
@@ -67,19 +67,19 @@ class polynomial_regression:
         if not isinstance(intercept, bool):
             raise TypeError(f"Invalid data type: Expected intercept flag (intercept) to have a bool data type, got '{type(intercept).__name__}'.")
 
-        if not isinstance(lam, (float, int)):
+        if not isinstance(lam, (float, int)) or isinstance(lam, bool):
             raise TypeError(f"Invalid data type: Expected lambda hyperparameter (lam) to have a float or int data type, got '{type(lam).__name__}'.")
 
         if lam <= 0:
             raise ValueError("Invalid value for (lam): Lambda hyperparameter (lam) must be a positive value.")
 
-        if not isinstance(eps, (float, int)):
+        if not isinstance(eps, (float, int)) or isinstance(eps, bool):
             raise TypeError(f"Invalid data type: Expected epsilon convergence parameter (eps) to have a float or int data type, got '{type(eps).__name__}'.")
 
         if eps <= 0:
             raise ValueError("Invalid value for (eps): Epsilon convergence parameter (eps) must be a positive value.")
 
-        if not isinstance(max_iter, int):
+        if not isinstance(max_iter, int) or isinstance(max_iter, bool):
             raise TypeError(f"Invalid data type: Expected maximum of iterations convergence parameter (max_iter) to have a int data type, got '{type(max_iter).__name__}'.")
         
         if max_iter <= 0:
@@ -170,7 +170,7 @@ class polynomial_regression:
         Returns:
             np.ndarray
         """
-        if self.coef == None:
+        if self.coef is None:
             raise RuntimeError("Model is not fitted yet. Call fit() first.")
 
         x_array = self._exceptions_data(x)
