@@ -19,10 +19,6 @@ def sample_data():
     return X, y
 
 
-# seed is 42 by standard inside the methods,
-# where np.random.seed(42) is set
-
-
 # bootstrap sample tests:
 def test_bootstrap_sample_shape(sample_data):
     """Verify if the shape is preserved in the bootstrap samples.
