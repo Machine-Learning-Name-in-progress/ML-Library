@@ -424,7 +424,7 @@ class Lasso(_LinearRegression):
         if (not isinstance(eps, (float, int))) or isinstance(eps, bool):
             raise TypeError(f"Invalid data type: Expected epsilon convergence parameter (eps) to have a float data type, got '{type(eps).__name__}'.")
 
-        if ((not isinstance(max_iter, int)) or isinstance(x, bool)) and (not(isinstance(max_iter, float) and max_iter.is_integer())):
+        if ((not isinstance(max_iter, int)) or isinstance(max_iter, bool)) and (not(isinstance(max_iter, float) and max_iter.is_integer())):
             raise TypeError(f"Invalid data type: Expected maximum of iterations convergence parameter (max_iter) to have a int data type, got '{type(max_iter).__name__}'.")
 
         if(lam<0):

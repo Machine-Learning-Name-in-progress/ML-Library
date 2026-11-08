@@ -100,7 +100,7 @@ def test_lasso_perfect_plane_regression():
     y = 1*X[:,0] + 2*X[:,1] + 3*X[:,2] + 4*X[:,3] + 5
     model = Lasso()
 
-    model.fit(X,y,lam=1e-10)
+    model.fit(X,y, lam=1e-10, eps=0)
 
     assert (model.coef == pytest.approx([1,2,3,4])) and (model.intercept == pytest.approx(5))
 
