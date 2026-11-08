@@ -21,7 +21,7 @@ def test_loocv_invalid_parameters() -> None:
 
 
 def test_loocv_split_sizes_and_no_overlap() -> None:
-    """Test if each split leaves exactly one observation out without overlap."""
+    """Test if each split leaves one observation out without overlap."""
     n = 5
     splits = loocv_indices(n=n)
 
