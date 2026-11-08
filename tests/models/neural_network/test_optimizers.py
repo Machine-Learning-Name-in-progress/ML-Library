@@ -61,3 +61,39 @@ def test_sgd_parabola_convergence() -> None:
         w = optimizer.update(w, grad, key="parabola")
 
     np.testing.assert_allclose(w, np.zeros_like(w), atol=1e-6)
+
+
+def test_adam_invalid_parameters() -> None:
+    """Test if invalid Adam AND AdamW hyperparameters raise ValueError."""
+    with pytest.raises(ValueError):
+        Adam(lr=0.001, beta1=1.0)
+    with pytest.raises(ValueError):
+        Adam(lr=0.001, beta2=-0.1)
+    with pytest.raises(ValueError):
+        Adam(lr=0.001, eps=0.0)
+    with pytest.raises(ValueError):
+        AdamW(lr=0.001, weight_decay=-0.01)
+
+
+def test_adam_parabola_convergence() -> None:
+    """Test if Adam converges on a simple parabola f(w) = w^2."""
+    optimizer = Adam(lr=0.1)
+    w = np.array([5.0, -3.0])
+
+    for _ in range(200):
+        grad = 2.0 * w
+        w = optimizer.update(w, grad, key="parabola_adam")
+
+    np.testing.assert_allclose(w, np.zeros_like(w), atol=1e-4)
+
+
+def test_adamw_parabola_convergence() -> None:
+    """Test AdamW weight decay and convergence on f(w) = w^2."""
+    optimizer = AdamW(lr=0.1, weight_decay=0.05)
+    w = np.array([5.0, -3.0])
+
+    for _ in range(200):
+        grad = 2.0 * w
+        w = optimizer.update(w, grad, key="layer_0_weights")
+
+    np.testing.assert_allclose(w, np.zeros_like(w), atol=1e-4)
