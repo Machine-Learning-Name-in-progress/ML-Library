@@ -1,8 +1,7 @@
-"""Tests for optimizers"""
+"""Tests for optimizers."""
 
 import numpy as np
 import pytest
-
 from ml_library.models.neural_network.layers import Dense
 from ml_library.models.neural_network.optimizers import SGD, Adam, AdamW
 
@@ -20,7 +19,7 @@ def test_sgd_invalid_parameters() -> None:
 
 
 def test_sgd_step_on_dense_layer() -> None:
-    """Test SGD step updating simulated weights and bias on a Dense layer."""
+    """Test SGD step updating weights and bias on a Dense layer."""
     layer = Dense(n_inputs=2, n_outputs=2)
     layer.weights = np.array([[1.0, 2.0], [3.0, 4.0]])
     layer.bias = np.array([[0.5, -0.5]])
@@ -97,3 +96,33 @@ def test_adamw_parabola_convergence() -> None:
         w = optimizer.update(w, grad, key="layer_0_weights")
 
     np.testing.assert_allclose(w, np.zeros_like(w), atol=1e-4)
+
+
+def test_shape_and_weight_decay_adamw() -> None:
+    """Test AdamW weight decay and shape consistency on Dense layer."""
+    layer = Dense(n_inputs=2, n_outputs=2)
+    layer.weights = np.array([[1.0, 2.0], [3.0, 4.0]])
+    layer.bias = np.array([[0.5, -0.5]])
+
+    layer.grad_weights = np.array([[0.5, -1.0], [2.0, 0.0]])
+    layer.grad_bias = np.array([[1.0, -2.0]])
+
+    optimizer = AdamW(lr=0.1, weight_decay=0.05)
+    optimizer.step([layer])
+
+    expected_weights = np.array([[0.895, 2.09], [2.885, 3.98]])
+    expected_bias = np.array([[0.4, -0.4]])
+
+    np.testing.assert_allclose(layer.weights, expected_weights, rtol=1e-7)
+    np.testing.assert_allclose(layer.bias, expected_bias, rtol=1e-7)
+
+
+# To evitate duplicate codes:
+@pytest.mark.parametrize("optimizer", [SGD, Adam, AdamW])
+def test_optimizer_shape_validation(optimizer) -> None:
+    """Test that mismatched param and grad shapes raise ValueError."""
+    param = np.zeros((2, 2))
+    grad = np.zeros((2, 3))
+
+    with pytest.raises(ValueError, match="shapes must match"):
+        optimizer(lr=0.01).update(param, grad)

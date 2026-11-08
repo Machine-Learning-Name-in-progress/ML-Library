@@ -1,4 +1,4 @@
-"""Optimizers classes for neural notworks"""
+"""Optimizers classes for neural networks."""
 
 from abc import ABC, abstractmethod
 
@@ -6,7 +6,7 @@ import numpy as np
 
 
 class Optimizer(ABC):
-    """Base class for neiural network optimizers."""
+    """Base class for neural network optimizers."""
 
     def __init__(self, lr: float = 0.01) -> None:
         """Initialize the optimizer.
@@ -15,7 +15,7 @@ class Optimizer(ABC):
             lr: learning rate. Must be positive.
         """
         if lr <= 0:
-            raise ValueError(f"Learning rate must be positive")
+            raise ValueError("Learning rate must be positive")
         self.lr = lr
 
     @abstractmethod
@@ -25,16 +25,16 @@ class Optimizer(ABC):
         """Update a parameters array given its gradient."""
 
     def step(self, layers: list) -> None:
-        """Update  weights and baises for a list of network layers.
+        """Update weights and biases for a list of network layers.
 
         Args:
-            layers: SIngle layer or list of layers from the neural network.
+            layers: Single layer or list of layers from the neural network.
         """
-        if not isinstance(layers, (list, tuple)):
+        if not isinstance(layers, list):
             layers = [layers]
 
         for i, layer in enumerate(layers):
-            # update layer wights -> w = w - lr * dL/dw
+            # update layer weights -> w = w - lr * dL/dw
             if (
                 hasattr(layer, "weights")
                 and getattr(layer, "grad_weights", None) is not None
@@ -45,7 +45,7 @@ class Optimizer(ABC):
                     key=f"layer_{i}_weights",
                 )
 
-            # update layer bises -> b = b - lr * dL/db
+            # update layer biases -> b = b - lr * dL/db
             if (
                 hasattr(layer, "bias")
                 and getattr(layer, "grad_bias", None) is not None
@@ -58,14 +58,14 @@ class Optimizer(ABC):
 
 
 class SGD(Optimizer):
-    """Stochasctic Gradient Descent optimizer."""
+    """Stochastic Gradient Descent optimizer."""
 
     def __init__(self, lr: float = 0.01, momentum: float = 0.0) -> None:
-        """Initialzie the SGD.
+        """Initialize the SGD.
 
         Args:
             lr: learning rate.
-            momentum: momentumfactor in range [0, 1).
+            momentum: momentum factor in range [0, 1).
         """
         super().__init__(lr=lr)
         if momentum < 0 or momentum >= 1.0:
@@ -83,7 +83,7 @@ class SGD(Optimizer):
         """Compute and apply the SGD update to the parameters.
 
         Args:
-            param: Current parametersvalues.
+            param: Current parameters values.
             grad: Gradient with respect to parameters.
             key: Identifier used to store the velocity.
 
@@ -91,20 +91,20 @@ class SGD(Optimizer):
             Updated parameter array.
         """
         if param.shape != grad.shape:
-            raise ValueError("Param and grad shapes must match..")
+            raise ValueError("Param and grad shapes must match.")
 
         # standard gradient descendent step -> w = w - lr * grad
         if self.momentum == 0.0:
             return param - self.lr * grad
 
         if key is None:
-            key = str(id(param))
+            key = "default"
 
-        # initialize velocity with zerps on firts step -> v_0 = 0
+        # initialize velocity with zeros on first step -> v_0 = 0
         if key not in self.velocities:
-            self.velocities[key] = np.zeros_like(param)
+            self.velocities[key] = np.zeros_like(param, dtype=np.float64)
 
-        # accumulte momentum velocity -> v_t = momentum * v_t-1 + lr * grad
+        # accumulate momentum velocity -> v_t = momentum * v_t-1 + lr * grad
         self.velocities[key] = (
             self.momentum * self.velocities[key] + self.lr * grad
         )
@@ -164,12 +164,12 @@ class Adam(Optimizer):
             raise ValueError("Param and grad shapes must match.")
 
         if key is None:
-            key = str(id(param))
+            key = "default"
 
         # initialize moments with zeros on first step -> m_0 = 0, v_0 = 0
         if key not in self.m:
-            self.m[key] = np.zeros_like(param)
-            self.v[key] = np.zeros_like(param)
+            self.m[key] = np.zeros_like(param, dtype=np.float64)
+            self.v[key] = np.zeros_like(param, dtype=np.float64)
             self.t[key] = 0
 
         self.t[key] += 1
@@ -234,7 +234,7 @@ class AdamW(Adam):
         if param.shape != grad.shape:
             raise ValueError("Param and grad shapes must match.")
 
-        # appli wiight decay only to weights -> w = w - lr * lambda * w
+        # apply weight decay only to weights -> w = w - lr * lambda * w
         if key is not None and "bias" in key:
             decayed_param = param
         else:
