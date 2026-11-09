@@ -19,5 +19,5 @@ __all__ = [
     "PolynomialRegression",
     "Ridge",
     "Kmeans",
-    "pca",
+    "PCA",
 ]
