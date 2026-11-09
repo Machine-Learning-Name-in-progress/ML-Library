@@ -148,3 +148,103 @@ class Tanh:
 
         # the derivative is 1 - tanh(x)**2
         return gradient * (1.0 - self._output_layer**2)
+
+
+class LeakyReLU:
+    """Leaky ReLU activation function class."""
+
+    def __init__(self, alpha: float = 0.01) -> None:
+        """Initialize the Leaky ReLU activation function.
+
+        Args:
+            alpha: Slope for negative inputs.
+        """
+        if not np.isfinite(alpha) or alpha < 0.0:
+            raise ValueError("alpha must be finite and non-negative.")
+        self.alpha = alpha
+        self._input_layer = None
+
+    def forward(self, input_layer: np.ndarray) -> np.ndarray:
+        """Forward pass for Leaky ReLU activation function.
+
+        Args:
+            input_layer: Input layer of the neural network.
+
+        Returns:
+            Output layer of the neural network.
+        """
+        self._input_layer = np.asarray(input_layer, dtype=np.float64)
+        return np.where(
+            self._input_layer > 0,
+            self._input_layer,
+            self.alpha * self._input_layer,
+        )
+
+    def backward(self, gradient: np.ndarray) -> np.ndarray:
+        """Backward pass for Leaky ReLU activation function.
+
+        Args:
+            gradient: Gradient of the loss function with
+                respect to the output layer.
+
+        Returns:
+            Gradient of the loss function with
+                respect to the input layer.
+        """
+        if self._input_layer is None:
+            raise RuntimeError("Call forward before backward.")
+
+        slope = np.where(self._input_layer > 0, 1.0, self.alpha)
+        return gradient * slope
+
+
+class Softmax:
+    """Softmax activation function class for multi-class output."""
+
+    def __init__(self, eps: float = 1e-15) -> None:
+        """Initialize the Softmax activation function.
+
+        Args:
+            eps: Small constant to prevent probability underflow.
+        """
+        self.eps = eps
+        self._output_layer = None
+
+    def forward(self, input_layer: np.ndarray) -> np.ndarray:
+        """Forward pass for Softmax activation function.
+
+        Args:
+            input_layer: Input logits of the neural network.
+
+        Returns:
+            Normalized probability distribution along the last axis.
+        """
+        x = np.asarray(input_layer, dtype=np.float64)
+        shifted = x - np.max(x, axis=-1, keepdims=True)
+        exp_x = np.exp(shifted)
+        probs = exp_x / np.sum(exp_x, axis=-1, keepdims=True)
+        probs = np.clip(probs, self.eps, 1.0)
+        self._output_layer = probs / np.sum(
+            probs, axis=-1, keepdims=True
+        )
+        return self._output_layer
+
+    def backward(self, gradient: np.ndarray) -> np.ndarray:
+        """Backward pass for Softmax activation function.
+
+        Args:
+            gradient: Gradient of the loss function with
+                respect to the output probabilities.
+
+        Returns:
+            Gradient of the loss function with
+                respect to the input logits.
+        """
+        if self._output_layer is None:
+            raise RuntimeError("Call forward before backward.")
+
+        dot = np.sum(
+            gradient * self._output_layer, axis=-1, keepdims=True
+        )
+        return self._output_layer * (gradient - dot)
+

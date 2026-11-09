@@ -1,9 +1,9 @@
-"""Neural network package: layers, activations, losses, optimizers and models."""
+"""Neural network package: layers, activations, losses and models."""
 
-from .activations import Linear, ReLU, Sigmoid, Tanh
+from .activations import LeakyReLU, Linear, ReLU, Sigmoid, Softmax, Tanh
 from .layers import Dense
 from .losses import MSE, BinaryCrossEntropy, CategoricalCrossEntropy
-from .mlp import MLPRegressor
+from .mlp import MLPClassifier, MLPRegressor
 from .optimizers import SGD, Adam, AdamW, Optimizer
 
 __all__ = [
@@ -14,10 +14,13 @@ __all__ = [
     "BinaryCrossEntropy",
     "CategoricalCrossEntropy",
     "Dense",
+    "LeakyReLU",
     "Linear",
+    "MLPClassifier",
     "MLPRegressor",
     "Optimizer",
     "ReLU",
     "Sigmoid",
+    "Softmax",
     "Tanh",
 ]
