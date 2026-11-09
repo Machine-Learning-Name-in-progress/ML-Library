@@ -1,0 +1,116 @@
+<document lang="en" type="paper">
+  <chapter id="ch:decision-trees">
+  <title>Decision Trees</title>
+
+  <intro>
+    A classification tree partitions the feature space by applying tests
+    at internal nodes. A leaf predicts a class from the samples that
+    reach it. This document describes the criteria used by
+    <c>ml_library.models.decision_tree</c>.
+  </intro>
+
+  <section id="gini">
+    <title>Gini</title>
+
+    <subsection id="definition">
+      <title>Definition</title>
+
+      Let $S$ be the set of sample indices at a node, with labels
+      $y_i \in \{1,\ldots,K\}$. For each class $k$, let
+      $\hat p_k(S)=|\{i\in S:y_i=k\}|/|S|$ be its empirical frequency.
+      The Gini impurity of a nonempty node is
+
+      <equation id="eq:gini">
+        G(S) = 1 - \sum_{k=1}^{K} \hat p_k(S)^2.
+      </equation>
+
+      For two independent draws $Y,Y'$ from the empirical class
+      distribution, $G(S)=\Pr(Y\ne Y')$. A pure node has $G(S)=0$.
+      In the binary case, with class frequencies $p$ and $1-p$,
+      $G(S)=2p(1-p)$, which is maximal at $p=1/2$.
+
+      The function <c>_gini</c> computes $G(S)$ from the label counts.
+    </subsection>
+
+    <subsection id="split">
+      <title>Split criterion</title>
+
+      A candidate $(j,t)$ consists of a feature index $j$ and a threshold $t$.
+      For a sample $x_i$, the test $x_{ij}\le t$ sends $i$ to the left
+      child $L$. The remaining indices form the right child $R$.
+      For two nonempty children, <c>_split_gini</c> computes
+
+      <equation id="eq:split">
+        Q_S(j,t) = \frac{|L|}{|S|}G(L) + \frac{|R|}{|S|}G(R).
+      </equation>
+
+      For each feature, <c>_best_split</c> evaluates midpoints between
+      consecutive distinct values and selects the valid candidate that
+      minimizes $Q_S(j,t)$. Since $G(S)$ is fixed at the parent node,
+      this is equivalent to maximizing $G(S)-Q_S(j,t)$.
+    </subsection>
+
+    <subsection id="gini-reduction">
+      <title>Why this criterion?</title>
+
+      <proposition id="prop:gini-reduction">
+        <title>Gini impurity reduction</title>
+
+        Let $p_L$ and $p_R$ be the vectors of class frequencies in two
+        nonempty children, and let $\alpha=|L|/|S|$. Then
+
+        <equation id="eq:gini-reduction">
+          G(S)-Q_S(j,t)
+          =\alpha(1-\alpha)\|p_L-p_R\|_2^2\ge 0.
+        </equation>
+
+        Thus, minimizing weighted Gini impurity maximizes the separation
+        between the children's class distributions, weighted by their sizes.
+      </proposition>
+
+      <proof of="prop:gini-reduction" collapsed="true">
+        The parent frequencies satisfy $p_S=\alpha p_L+(1-\alpha)p_R$.
+        Using $G(p)=1-\|p\|_2^2$ and expanding the squared norm gives
+
+        <equations>
+          G(S)-Q_S(j,t)
+          &=\alpha\|p_L\|_2^2+(1-\alpha)\|p_R\|_2^2
+            -\|\alpha p_L+(1-\alpha)p_R\|_2^2 \\
+          &=\alpha(1-\alpha)
+            \bigl(\|p_L\|_2^2+\|p_R\|_2^2-2\langle p_L,p_R\rangle\bigr) \\
+          &=\alpha(1-\alpha)\|p_L-p_R\|_2^2.
+        </equations>
+
+        Since $0<\alpha<1$, the reduction is nonnegative and equals
+        zero exactly when $p_L=p_R$.
+      </proof>
+
+      This identity explains the criterion used by <c>_best_split</c>.
+      For the definition and probabilistic motivation of Gini impurity,
+      see <link to="https://web.stanford.edu/class/stats202/notes/Tree/Tree.html">Stanford STATS 202 — Tree-based methods</link>.
+      The proof above derives the identity from that definition.
+    </subsection>
+
+    <subsection id="example">
+      <title>Worked example</title>
+
+      Suppose $S$ contains six samples of class A and four of class B.
+      Then $G(S)=1-(6/10)^2-(4/10)^2=0.48$. Consider a split that sends
+      four A samples to $L$ and leaves two A and four B samples in $R$.
+      Hence $G(L)=0$ and $G(R)=1-(2/6)^2-(4/6)^2=4/9$.
+
+      <equation id="eq:example">
+        Q_S(j,t)=\frac{4}{10}\cdot 0+\frac{6}{10}\cdot\frac{4}{9}
+        =\frac{4}{15}\approx 0.267.
+      </equation>
+
+      If the classifier selects this split, the left leaf predicts A
+      and the right leaf predicts B by majority vote.
+    </subsection>
+  </section>
+
+  <section id="classifier">
+    <title>Classifier</title>
+  </section>
+  </chapter>
+</document>

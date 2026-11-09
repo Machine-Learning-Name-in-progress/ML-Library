@@ -1,4 +1,5 @@
 <document lang="en" type="paper">
+  <chapter id="ch:neural-networks">
   <title>Neural Networks</title>
 
   <intro>
@@ -253,4 +254,5 @@
     fitting when reproducing a run in the same numerical environment.
   </section>
 
+  </chapter>
 </document>
