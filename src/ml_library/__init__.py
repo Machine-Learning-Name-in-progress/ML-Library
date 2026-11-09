@@ -29,5 +29,5 @@ __all__ = [
     "OrdinaryLeastSquares",
     "PolynomialRegression",
     "Ridge",
-    "pca",
+    "PCA",
 ]
