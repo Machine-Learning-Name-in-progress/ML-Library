@@ -2,9 +2,11 @@
 
 import numpy as np
 from ml_library.models.neural_network.activations import (
+    LeakyReLU,
     Linear,
     ReLU,
     Sigmoid,
+    Softmax,
     Tanh,
 )
 
@@ -82,6 +84,7 @@ def test_sigmoid_forward_stability():
 
 
 def test_linear_forward_and_backward():
+    """Test Linear activation function forward and backward passes."""
     activation = Linear()
     inputs = np.array([[-2.0, 0.0, 3.0]])
     gradient = np.array([[0.5, 2.0, -4.0]])
@@ -94,6 +97,7 @@ def test_linear_forward_and_backward():
 
 
 def test_tanh_forward_and_backward():
+    """Test Tanh activation function forward and backward passes."""
     activation = Tanh()
     half_log_three = np.log(3.0) / 2.0
     inputs = np.array([[-half_log_three, 0.0, half_log_three]])
@@ -104,3 +108,37 @@ def test_tanh_forward_and_backward():
 
     np.testing.assert_allclose(output, [[-0.5, 0.0, 0.5]])
     np.testing.assert_allclose(input_gradient, [[1.5, 3.0, -3.0]])
+
+
+def test_leaky_relu_forward_and_backward():
+    """Test LeakyReLU forward and backward passes."""
+    lrelu = LeakyReLU(alpha=0.1)
+    x = np.array([-2.0, 0.0, 4.0])
+    result = lrelu.forward(x)
+    expected = np.array([-0.2, 0.0, 4.0])
+    np.testing.assert_array_almost_equal(result, expected, decimal=7)
+
+    da = np.ones_like(x)
+    grad = lrelu.backward(da)
+    expected_grad = np.array([0.1, 0.1, 1.0])
+    np.testing.assert_array_almost_equal(grad, expected_grad, decimal=7)
+
+
+def test_softmax_forward_and_backward():
+    """Test Softmax forward probabilities and backward Jacobian."""
+    softmax = Softmax()
+    x = np.array([[0.0, 0.0, 0.0], [1000.0, -1000.0, 0.0]])
+    probs = softmax.forward(x)
+
+    expected_probs = np.array(
+        [[1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0], [1.0, 0.0, 0.0]]
+    )
+    np.testing.assert_array_almost_equal(probs, expected_probs, decimal=7)
+
+    grad_out = np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]])
+    grad_in = softmax.backward(grad_out)
+    expected_grad_0 = np.array([2.0 / 9.0, -1.0 / 9.0, -1.0 / 9.0])
+    np.testing.assert_array_almost_equal(
+        grad_in[0], expected_grad_0, decimal=7
+    )
+
