@@ -11,7 +11,7 @@ from .models import (
     OrdinaryLeastSquares,
     PolynomialRegression,
     Ridge,
-    pca,
+    PCA,
 )
 
 __all__ = [
