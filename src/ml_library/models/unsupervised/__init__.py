@@ -1,6 +1,6 @@
 """Unsupervised models."""
 
 from .kmeans import Kmeans
-from .pca import pca
+from .pca import PCA
 
 __all__ = ["Kmeans", "PCA"]
