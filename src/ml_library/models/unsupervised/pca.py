@@ -1,6 +1,6 @@
 import numpy as np
 
-class pca:
+class PCA:
     """
     Class for the Principal Component Analysis (PCA) unsupervised model. 
 
@@ -17,9 +17,10 @@ class pca:
         mean (np.ndarray): Array containing the mean for each feature, estimated from the training set.
         std (np.ndarray): Array containing the standard deviation for each feature. 
             If standarize = False, std is None.
+        evr (np.ndarray): Array containing the proportion of variance explained by each component.
     """
     def __init__(self, n_components: int, solver: str = 'eigen', standardize: bool = False) -> None:
-        if not isinstance(n_components, int):
+        if not isinstance(n_components, (int, np.integer)):
             raise TypeError(f"The number of components must be an integer, got {type(n_components).__name__}.")
 
         if not isinstance(standardize, bool):
@@ -38,6 +39,7 @@ class pca:
         self.components = None
         self.mean = None
         self.std = None
+        self.evr = None
 
     def _verify_input(self, X: np.ndarray) -> np.ndarray:
         """
@@ -89,12 +91,15 @@ class pca:
             # The order of precedence for the eigenvectors is defined by the associated eigenvalue.
             ind_vect = np.argsort(e_val)[::-1]
             e_vect = e_vect[:, ind_vect]
+            e_val_sort = e_val[ind_vect]
             self.components = e_vect[:, :self.n_components]
+            self.evr = e_val_sort[:self.n_components] / np.sum(e_val_sort)
         else:
             # Calculates the SVD decomposition (as U \Sigma V), and obtains the first components in V.
-            _, _, V_transp = np.linalg.svd(X_center)
+            _, E, V_transp = np.linalg.svd(X_center, full_matrices=False)
             V = V_transp.T
             self.components = V[:, :self.n_components]
+            self.evr = (E[:self.n_components] ** 2) / np.sum(E ** 2)
 
     def transform(self, X: np.ndarray) -> np.ndarray:
         """
