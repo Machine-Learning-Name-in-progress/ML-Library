@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from ml_library.models.classification.logistic_regression import logistic_regression
+from ml_library.models.classification.logistic_regression import LogisticRegression
 
 
 @pytest.fixture
