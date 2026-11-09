@@ -1,0 +1,11 @@
+inputs = [
+  "index.dlt",
+  "decision-trees.dlt",
+  "neural-networks.dlt",
+]
+out = "."
+
+[document]
+lang = "en"
+theme-accent = "red"
+theme-mode = "light"

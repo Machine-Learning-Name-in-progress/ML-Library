@@ -1,0 +1,9 @@
+<document lang="en" type="paper">
+  <title>Machine Learning</title>
+  <intro>
+    Mathematical foundations and implementation notes for ML Library.
+    Explore the definitions behind each model, how they translate into code,
+    and the derivations that explain the main design choices.
+  </intro>
+  <toc scope="project" depth="4"/>
+</document>
