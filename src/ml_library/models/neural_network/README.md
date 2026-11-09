@@ -1,5 +1,3 @@
-[Read the Neural Networks documentation](https://machine-learning-name-in-progress.github.io/ML-Library/neural-networks.html)
-
 # File Responsibilities
 
 | File | Responsibility|
