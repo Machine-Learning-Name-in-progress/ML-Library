@@ -72,7 +72,7 @@ class KNN:
         """
 
         # Compute k-nearest distances
-        distances = [np.linalg.norm(x_new - x_train) for x_train in self._x_train]
+        distances = np.linalg.norm(self._x_train - x_new, axis=1)
 
         # Pick the k-nearest points (index of k-shortest distances)
         nearest = np.argsort(distances)[: self._k]
