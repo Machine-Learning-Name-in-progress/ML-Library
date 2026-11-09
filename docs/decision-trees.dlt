@@ -49,6 +49,47 @@
       this is equivalent to maximizing $G(S)-Q_S(j,t)$.
     </subsection>
 
+    <subsection id="gini-reduction">
+      <title>Why this criterion?</title>
+
+      <proposition id="prop:gini-reduction">
+        <title>Gini impurity reduction</title>
+
+        Let $p_L$ and $p_R$ be the vectors of class frequencies in two
+        nonempty children, and let $\alpha=|L|/|S|$. Then
+
+        <equation id="eq:gini-reduction">
+          G(S)-Q_S(j,t)
+          =\alpha(1-\alpha)\|p_L-p_R\|_2^2\ge 0.
+        </equation>
+
+        Thus, minimizing weighted Gini impurity maximizes the separation
+        between the children's class distributions, weighted by their sizes.
+      </proposition>
+
+      <proof of="prop:gini-reduction" collapsed="true">
+        The parent frequencies satisfy $p_S=\alpha p_L+(1-\alpha)p_R$.
+        Using $G(p)=1-\|p\|_2^2$ and expanding the squared norm gives
+
+        <equations>
+          G(S)-Q_S(j,t)
+          &=\alpha\|p_L\|_2^2+(1-\alpha)\|p_R\|_2^2
+            -\|\alpha p_L+(1-\alpha)p_R\|_2^2 \\
+          &=\alpha(1-\alpha)
+            \bigl(\|p_L\|_2^2+\|p_R\|_2^2-2\langle p_L,p_R\rangle\bigr) \\
+          &=\alpha(1-\alpha)\|p_L-p_R\|_2^2.
+        </equations>
+
+        Since $0<\alpha<1$, the reduction is nonnegative and equals
+        zero exactly when $p_L=p_R$.
+      </proof>
+
+      This identity explains the criterion used by <c>_best_split</c>.
+      For the definition and probabilistic motivation of Gini impurity,
+      see <link to="https://web.stanford.edu/class/stats202/notes/Tree/Tree.html">Stanford STATS 202 — Tree-based methods</link>.
+      The proof above derives the identity from that definition.
+    </subsection>
+
     <subsection id="example">
       <title>Worked example</title>
 
