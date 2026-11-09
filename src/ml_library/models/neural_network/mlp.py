@@ -1,0 +1,126 @@
+import numpy as np
+
+from .activations import Tanh
+from .layers import Dense
+from .losses import MSE
+from .optimizers import SGD
+
+class MLPRegressor:
+    """Neural network for a single output regression with one hidden layes.
+    
+    The hidden-layer activation is configurable,
+    the output layer is lenar and
+    training uses full-batch gradient descent to minimize mean squared error.
+    
+    Args:
+        hidden_units: Number of neurons in the hidden layer.
+        learning_rate: Step used ny the optimizer.
+        epochs: Number of passes over the training data.
+        activation: Hidden-layer activation class (ex.: Tanh, ReLU...).
+            Pass the class so fit can create a fresh istance for each traininf run.
+    """
+
+    def __init__(
+        self, 
+        hidden_units: int = 8,
+        learning_rate : float = 0.05,
+        epochs: int = 500,
+        activation: type = Tanh
+    ) -> None:
+        #errors
+        if not isinstance(hidden_units, (int, np.integer)) or hidden_units < 1:
+            raise ValueError("hidden_units must be a positive integer")
+        if not isinstance(epochs, (int, np.integer)) or epochs < 1:
+            raise ValueError("epochs must be a positive integer")
+        if not np.isfinite(learning_rate) or learning_rate <= 0:
+            raise ValueError("learning_rate must be finite and positive")
+
+
+        self.hidden_units = hidden_units
+        self.learning_rate = learning_rate
+        self.epochs = epochs
+        # activation stores the class used to create a fresh activation for each fit
+        self.activation = activation
+
+        # the private attribute stores the fitted instance and its forward pass cache
+        # these attributes have different roles and do not duplicate the same value
+        self._activation_instance = None
+        self._hidden: Dense | None = None
+        self._output: Dense | None = None
+
+    def fit(self, X: np.ndarray, y: np.ndarray) -> "MLPRegressor":
+        """Train a new network on the given samples.
+
+        Args:
+            X: Deature matrix of shape (n_samples, n_features).
+            y: Regression targets of shape (n_samples,) or (n_samples, 1).
+
+        Returns:
+            The fitted model.
+        """
+
+        X = np.asarray(X, dtype=float)
+        y = np.asarray(y, dtype=float)
+
+        if X.ndim != 2 or X.shape[0] == 0 or X.shape[1] == 0:
+            raise ValueError("X must be a non_empty two dim array")
+        if y.ndim == 1:
+            y = y.reshape(-1,1)
+        if y.shape != (X.shape[0], 1):
+            raise ValueError("y must contain exactly one target per row of x")
+        if not np.isfinite(X).all() or not np.isfinite(y).all():
+            raise ValueError("X and y must contain only finite value")
+
+        hidden = Dense(X.shape[1], self.hidden_units)
+        activation = self.activation()
+        output = Dense(self.hidden_units, 1)
+        loss = MSE()
+        optimizer = SGD(lr=self.learning_rate)
+        layers = [hidden, output]
+
+        for _ in range(self.epochs):
+            hidden_values = activation.forward(hidden.forward(X))
+            predictions = output.forward(hidden_values)
+            loss_value = loss.forward(y, predictions)
+            if not np.isfinite(loss_value):
+                raise FloatingPointError("training produced a not finite loss")
+            
+            gradient = output.backward(loss.backward())
+            hidden.backward(activation.backward(gradient))
+
+            optimizer.step(layers)
+
+            for layer in layers:
+                if not np.isfinite(layer.weights).all() or not np.isfinite(layer.bias).all():
+                    raise FloatingPointError("training produced non-finite parameters")
+        
+        self._hidden = hidden
+        self._activation_instance = activation
+        self._output = output
+        return self
+
+    def predict(self, X: np.ndarray) -> np.ndarray:
+        """Predict one value per sample using the fitted network.
+
+        Args:
+            X: Feature matrix with the same number of columns used during fit.
+
+        Returns:
+            A one-dimensional array of shape (n_samples,).
+
+        Raises:
+            RuntimeError: If the model has not been fitted.
+            ValueError: If X has the wrong shape or contains non-finite values.
+        """
+        if self._hidden is None or self._activation_instance is None or self._output is None:
+            raise RuntimeError("call fit before predict.")
+
+        X = np.asarray(X, dtype=float)
+        if X.ndim != 2 or X.shape[1] != self._hidden.weights.shape[0]:
+            raise ValueError("X must have the same number of features as during fit")
+
+        if not np.isfinite(X).all():
+            raise ValueError("X must contain only finite values")
+        hidden_values = self._activation_instance.forward(self._hidden.forward(X))
+        return self._output.forward(hidden_values).ravel()
+        
