@@ -8,7 +8,7 @@ class ReLU:
 
     def __init__(self) -> None:
         """Initialize the ReLU activation function."""
-        self.input_layer = None
+        self._input_layer = None
 
     def forward(self, input_layer: np.ndarray) -> np.ndarray:
         """Forward pass for ReLU activation function.
@@ -19,7 +19,7 @@ class ReLU:
         Returns:
             Output layer of the neural network.
         """
-        self.input_layer = input_layer
+        self._input_layer = input_layer
         return np.maximum(0, input_layer)
 
     def backward(self, gradient: np.ndarray) -> np.ndarray:
@@ -33,10 +33,10 @@ class ReLU:
             Gradient of the loss function with
                 respect to the input layer.
         """
-        if self.input_layer is None:
+        if self._input_layer is None:
             raise RuntimeError("Call forward before backward.")
 
-        return gradient * (self.input_layer > 0)
+        return gradient * (self._input_layer > 0)
 
 
 class Sigmoid:
@@ -44,8 +44,8 @@ class Sigmoid:
 
     def __init__(self) -> None:
         """Initialize the Sigmoid activation function."""
-        self.input_layer = None
-        self.output_layer = None
+        self._input_layer = None
+        self._output_layer = None
 
     def forward(self, input_layer: np.ndarray) -> np.ndarray:
         """Forward pass for Sigmoid activation function.
@@ -56,15 +56,15 @@ class Sigmoid:
         Returns:
             Output layer of the neural network.
         """
-        self.input_layer = np.asarray(input_layer, dtype=np.float64)
+        self._input_layer = np.asarray(input_layer, dtype=np.float64)
         # avoid overflow by using a nonpositive exponent
-        z = np.exp(-np.abs(self.input_layer))
+        z = np.exp(-np.abs(self._input_layer))
         # for x >= 0: 1 / (1 + z)
         # for x < 0:  z / (1 + z)
-        self.output_layer = np.where(
-            self.input_layer >= 0, 1.0 / (1.0 + z), z / (1.0 + z)
+        self._output_layer = np.where(
+            self._input_layer >= 0, 1.0 / (1.0 + z), z / (1.0 + z)
         )
-        return self.output_layer
+        return self._output_layer
 
     def backward(self, gradient: np.ndarray) -> np.ndarray:
         """Backward pass for Sigmoid activation function.
@@ -77,10 +77,10 @@ class Sigmoid:
             Gradient of the loss function with
                 respect to the input layer.
         """
-        if self.output_layer is None:
+        if self._output_layer is None:
             raise RuntimeError("Call forward before backward.")
 
-        return gradient * (self.output_layer * (1 - self.output_layer))
+        return gradient * (self._output_layer * (1 - self._output_layer))
 
 
 class Linear:
@@ -117,7 +117,7 @@ class Tanh:
 
     def __init__(self) -> None:
         """Initialize the Hyperbolic tangent activation function."""
-        self.output_layer = None
+        self._output_layer = None
 
     def forward(self, input_layer: np.ndarray) -> np.ndarray:
         """Forward pass for Hyperbolic tangent activation function.
@@ -129,8 +129,8 @@ class Tanh:
             Output layer of the neural network.
         """
         # save tanh(x) for the backward pass
-        self.output_layer = np.tanh(input_layer)
-        return self.output_layer
+        self._output_layer = np.tanh(input_layer)
+        return self._output_layer
 
     def backward(self, gradient: np.ndarray) -> np.ndarray:
         """Backward pass for Hyperbolic tangent activation function.
@@ -143,8 +143,8 @@ class Tanh:
             Gradient of the loss function with
                 respect to the input layer.
         """
-        if self.output_layer is None:
+        if self._output_layer is None:
             raise RuntimeError("Call forward before backward.")
 
         # the derivative is 1 - tanh(x)**2
-        return gradient * (1.0 - self.output_layer**2)
+        return gradient * (1.0 - self._output_layer**2)

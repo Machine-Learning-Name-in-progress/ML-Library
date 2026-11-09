@@ -23,12 +23,12 @@ class Dense:
         self.bias = np.zeros((1, n_outputs))
 
         # Store values needed during backpropagation.
-        self.input_layer = None
+        self._input_layer = None
         self.grad_weights = None
         self.grad_bias = None
 
     def forward(self, input_layer: np.ndarray) -> np.ndarray:
-        """COmpute the output of the dense layer
+        """Compute the output of the dense layer.
 
         Args:
             input_layer: Input array of shape (batch_size, n_inputs).
@@ -38,31 +38,31 @@ class Dense:
         """
 
         # Store the input for use during backpropagation.
-        self.input_layer = input_layer
+        self._input_layer = input_layer
 
         return input_layer @ self.weights + self.bias
 
     def backward(self, gradient: np.ndarray) -> np.ndarray:
-        """compute parameter gradients and propagate the gradient to the input
+        """Compute parameter gradients and propagate the gradient to the input.
         
-            kepping the weight and bias gradients in grad_weights and grad_bias
-            uses the input saved by the most recent call to forward
+            Kepping the weight and bias gradients in grad_weights and grad_bias.
+            Uses the input saved by the most recent call to forward.
         
             Args:
                 gradient: Gradient with respect to the layer output, with shape
                     (batch_size, n_outputs).
         
             Returns:
-                gradient with respect to the layer input [with shape
+                Gradient with respect to the layer input [with shape
                 (batch_size, n_inputs)].
         
             Raises:
-                RuntimeError: if `forward` has not been called
+                RuntimeError: If `forward` has not been called.
             """
-        if self.input_layer is None:
+        if self._input_layer is None:
             raise RuntimeError("Call forward before backward.")
         # Compute gradient for the trainable parameters.
-        self.grad_weights = self.input_layer.T @ gradient
+        self.grad_weights = self._input_layer.T @ gradient
         self.grad_bias = np.sum(gradient, axis=0, keepdims=True)
 
         # Pass the gradient to the previous layer.

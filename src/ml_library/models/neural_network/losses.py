@@ -8,8 +8,8 @@ class MSE:
 
     def __init__(self) -> None:
         """Initialize the MSE loss function."""
-        self.y_real = None
-        self.y_pred = None
+        self._y_real = None
+        self._y_pred = None
 
     def forward(self, y_real: np.ndarray, y_pred: np.ndarray) -> float:
         """Forward pass for MSE loss function.
@@ -24,9 +24,9 @@ class MSE:
         if y_real.shape != y_pred.shape:
             raise ValueError("y_real and y_pred must have the same shape.")
         
-        self.y_real = y_real
-        self.y_pred = y_pred
-        return float(np.mean((self.y_real - self.y_pred) ** 2))
+        self._y_real = y_real
+        self._y_pred = y_pred
+        return float(np.mean((self._y_real - self._y_pred) ** 2))
 
     def backward(self) -> np.ndarray:
         """Backward pass for MSE loss function.
@@ -34,7 +34,7 @@ class MSE:
         Returns:
             Gradient of the loss function with respect to y_pred.
         """
-        return 2 * (self.y_pred - self.y_real) / self.y_pred.size
+        return 2 * (self._y_pred - self._y_real) / self._y_pred.size
 
 
 class BinaryCrossEntropy:
@@ -47,8 +47,8 @@ class BinaryCrossEntropy:
             eps: Small value to prevent log(0).
         """
         self.eps = eps
-        self.y_real = None
-        self.y_pred = None
+        self._y_real = None
+        self._y_pred = None
 
     def forward(self, y_real: np.ndarray, y_pred: np.ndarray) -> float:
         """Forward pass for Binary Cross Entropy loss function.
@@ -64,8 +64,8 @@ class BinaryCrossEntropy:
         if y_real.shape != y_pred.shape:
             raise ValueError("y_real and y_pred must have the same shape.")
         
-        self.y_real = y_real
-        self.y_pred = y_pred
+        self._y_real = y_real
+        self._y_pred = y_pred
         y_pred_clipped = np.clip(y_pred, self.eps, 1.0 - self.eps)
         loss = -(
             y_real * np.log(y_pred_clipped)
@@ -79,11 +79,11 @@ class BinaryCrossEntropy:
         Returns:
             Gradient of the loss function with respect to y_pred.
         """
-        y_pred_clipped = np.clip(self.y_pred, self.eps, 1.0 - self.eps)
-        gradient = (1.0 - self.y_real) / (
+        y_pred_clipped = np.clip(self._y_pred, self.eps, 1.0 - self.eps)
+        gradient = (1.0 - self._y_real) / (
             1.0 - y_pred_clipped
-        ) - self.y_real / y_pred_clipped
-        return gradient / self.y_pred.size
+        ) - self._y_real / y_pred_clipped
+        return gradient / self._y_pred.size
 
 
 class CategoricalCrossEntropy:
@@ -92,8 +92,8 @@ class CategoricalCrossEntropy:
     def __init__(self, eps: float = 1e-15) -> None:
         """Initialize Categorical Cross Entropy loss function."""
         self.eps = eps
-        self.y_real = None
-        self.y_pred = None
+        self._y_real = None
+        self._y_pred = None
 
     def forward(self, y_real: np.ndarray, y_pred: np.ndarray) -> float:
         """Forward pass for Categorical Cross Entropy loss function.
@@ -105,8 +105,8 @@ class CategoricalCrossEntropy:
         Returns:
             Categorical Cross Entropy loss value.
         """
-        self.y_real = y_real
-        self.y_pred = y_pred
+        self._y_real = y_real
+        self._y_pred = y_pred
         y_pred_clipped = np.clip(y_pred, self.eps, 1.0 - self.eps)
 
         # return loss
@@ -118,6 +118,6 @@ class CategoricalCrossEntropy:
         Returns:
             Gradient of the loss function with respect to y_pred.
         """
-        y_pred_clipped = np.clip(self.y_pred, self.eps, 1.0 - self.eps)
-        gradient = -self.y_real / y_pred_clipped
+        y_pred_clipped = np.clip(self._y_pred, self.eps, 1.0 - self.eps)
+        gradient = -self._y_real / y_pred_clipped
         return gradient

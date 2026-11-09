@@ -6,18 +6,18 @@ from .losses import MSE
 from .optimizers import SGD
 
 class MLPRegressor:
-    """neural network for a single output regression with one hidden layes
+    """Neural network for a single output regression with one hidden layes.
     
-    the hidden-layer activation is configurable,
+    The hidden-layer activation is configurable,
     the output layer is lenar and
     training uses full-batch gradient descent to minimize mean squared error.
     
     Args:
-        hidden_units: number of neurons in the hidden layer,
-        learning_rate: step used ny the optimizer,
-        epochs: number of passes over the training data,
-        activation: hidden-layer activation class (ex.: Tanh, ReLU...).
-            Pass the class so fit can create a fresh istance for each traininf run
+        hidden_units: Number of neurons in the hidden layer.
+        learning_rate: Step used ny the optimizer.
+        epochs: Number of passes over the training data.
+        activation: Hidden-layer activation class (ex.: Tanh, ReLU...).
+            Pass the class so fit can create a fresh istance for each traininf run.
     """
 
     def __init__(
@@ -39,18 +39,21 @@ class MLPRegressor:
         self.hidden_units = hidden_units
         self.learning_rate = learning_rate
         self.epochs = epochs
+        # activation stores the class used to create a fresh activation for each fit
         self.activation = activation
 
-        self._activation = None
+        # the private attribute stores the fitted instance and its forward pass cache
+        # these attributes have different roles and do not duplicate the same value
+        self._activation_instance = None
         self._hidden: Dense | None = None
         self._output: Dense | None = None
 
     def fit(self, X: np.ndarray, y: np.ndarray) -> "MLPRegressor":
-        """train a new network on the given samples
+        """Train a new network on the given samples.
 
         Args:
-            X: deature matrix of shape (n_samples, n_features).
-            y: regression targets of shape (n_samples,) or (n_samples, 1).
+            X: Deature matrix of shape (n_samples, n_features).
+            y: Regression targets of shape (n_samples,) or (n_samples, 1).
 
         Returns:
             The fitted model.
@@ -92,24 +95,24 @@ class MLPRegressor:
                     raise FloatingPointError("training produced non-finite parameters")
         
         self._hidden = hidden
-        self._activation = activation
+        self._activation_instance = activation
         self._output = output
         return self
 
     def predict(self, X: np.ndarray) -> np.ndarray:
-        """predict one value per sample using the fitted network.
+        """Predict one value per sample using the fitted network.
 
         Args:
-            X: feature matrix with the same number of columns used during fit.
+            X: Feature matrix with the same number of columns used during fit.
 
         Returns:
-            a one-dimensional array of shape (n_samples,)
+            A one-dimensional array of shape (n_samples,).
 
         Raises:
-            RuntimeError: if the model has not been fitted,
-            ValueError: if X has the wrong shape or contains non-finite values.
+            RuntimeError: If the model has not been fitted.
+            ValueError: If X has the wrong shape or contains non-finite values.
         """
-        if self._hidden is None or self._activation is None or self._output is None:
+        if self._hidden is None or self._activation_instance is None or self._output is None:
             raise RuntimeError("call fit before predict.")
 
         X = np.asarray(X, dtype=float)
@@ -118,6 +121,6 @@ class MLPRegressor:
 
         if not np.isfinite(X).all():
             raise ValueError("X must contain only finite values")
-        hidden_values = self._activation.forward(self._hidden.forward(X))
+        hidden_values = self._activation_instance.forward(self._hidden.forward(X))
         return self._output.forward(hidden_values).ravel()
         

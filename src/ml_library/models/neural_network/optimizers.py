@@ -12,7 +12,7 @@ class Optimizer(ABC):
         """Initialize the optimizer.
 
         Args:
-            lr: learning rate. Must be positive.
+            lr: Learning rate. Must be positive.
         """
         if not np.isfinite(lr) or lr <= 0:
             raise ValueError("Learning rate must be finite and positive.")
@@ -64,15 +64,15 @@ class SGD(Optimizer):
         """Initialize the SGD.
 
         Args:
-            lr: learning rate.
-            momentum: momentum factor in range [0, 1).
+            lr: Learning rate.
+            momentum: Momentum factor in range [0, 1).
         """
         super().__init__(lr=lr)
         if not (0.0 <= momentum < 1.0):
             raise ValueError("Momentum must be in range [0, 1).")
 
         self.momentum = momentum
-        self.velocities = {}
+        self._velocities = {}
 
     def update(
         self,
@@ -101,16 +101,16 @@ class SGD(Optimizer):
             key = "default"
 
         # initialize velocity with zeros on first step -> v_0 = 0
-        if key not in self.velocities:
-            self.velocities[key] = np.zeros_like(param, dtype=np.float64)
+        if key not in self._velocities:
+            self._velocities[key] = np.zeros_like(param, dtype=np.float64)
 
         # accumulate momentum velocity -> v_t = momentum * v_t-1 + lr * grad
-        self.velocities[key] = (
-            self.momentum * self.velocities[key] + self.lr * grad
+        self._velocities[key] = (
+            self.momentum * self._velocities[key] + self.lr * grad
         )
 
         # update parameters -> w = w - v_t
-        return param - self.velocities[key]
+        return param - self._velocities[key]
 
 
 class Adam(Optimizer):
@@ -126,11 +126,11 @@ class Adam(Optimizer):
         """Initialize the Adam optimizer.
 
         Args:
-            lr: learning rate.
-            beta1: decay rate for first moment.
-            beta2: decay rate for second moment.
-            eps: small constant to avoid division by zero.
-        v"""
+            lr: Learning rate.
+            beta1: Decay rate for first moment.
+            beta2: Decay rate for second moment.
+            eps: Small constant to avoid division by zero.
+        """
         super().__init__(lr=lr)
         if not (0.0 <= beta1 < 1.0) or not (0.0 <= beta2 < 1.0):
             raise ValueError("Betas must be in range [0, 1).")
@@ -140,9 +140,9 @@ class Adam(Optimizer):
         self.beta1 = beta1
         self.beta2 = beta2
         self.eps = eps
-        self.m = {}
-        self.v = {}
-        self.t = {}
+        self._m = {}
+        self._v = {}
+        self._t = {}
 
     def update(
         self,
@@ -167,23 +167,23 @@ class Adam(Optimizer):
             key = "default"
 
         # initialize moments with zeros on first step -> m_0 = 0, v_0 = 0
-        if key not in self.m:
-            self.m[key] = np.zeros_like(param, dtype=np.float64)
-            self.v[key] = np.zeros_like(param, dtype=np.float64)
-            self.t[key] = 0
+        if key not in self._m:
+            self._m[key] = np.zeros_like(param, dtype=np.float64)
+            self._v[key] = np.zeros_like(param, dtype=np.float64)
+            self._t[key] = 0
 
-        self.t[key] += 1
-        t = self.t[key]
+        self._t[key] += 1
+        t = self._t[key]
 
         # update first moment-> m_t = beta1 * m_t-1 + (1 - beta1) * grad
-        self.m[key] = self.beta1 * self.m[key] + (1.0 - self.beta1) * grad
+        self._m[key] = self.beta1 * self._m[key] + (1.0 - self.beta1) * grad
 
         # update second moment -> v_t = beta2 * v_t-1 + (1 - beta2) * grad^2
-        self.v[key] = self.beta2 * self.v[key] + (1.0 - self.beta2) * (grad**2)
+        self._v[key] = self.beta2 * self._v[key] + (1.0 - self.beta2) * (grad**2)
 
         # bias correction -> m_hat = m_t / (1 - beta1^t)
-        m_hat = self.m[key] / (1.0 - self.beta1**t)
-        v_hat = self.v[key] / (1.0 - self.beta2**t)
+        m_hat = self._m[key] / (1.0 - self.beta1**t)
+        v_hat = self._v[key] / (1.0 - self.beta2**t)
 
         # update parameters -> w = w - lr * m_hat / (sqrt(v_hat) + eps)
         return param - self.lr * m_hat / (np.sqrt(v_hat) + self.eps)
@@ -203,11 +203,11 @@ class AdamW(Adam):
         """Initialize the AdamW optimizer.
 
         Args:
-            lr: learning rate.
-            beta1: decay rate for first moment.
-            beta2: decay rate for second moment.
-            eps: small constant to avoid division by zero.
-            weight_decay: weight decay factor.
+            lr: Learning rate.
+            beta1: Decay rate for first moment.
+            beta2: Decay rate for second moment.
+            eps: Small constant to avoid division by zero.
+            weight_decay: Weight decay factor.
         """
         super().__init__(lr=lr, beta1=beta1, beta2=beta2, eps=eps)
 
