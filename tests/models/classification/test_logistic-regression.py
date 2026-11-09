@@ -11,71 +11,64 @@ def data():
     return x, y
 
 
-def test_logistic_regression_probabilities(data):
+def test_logistic_regression_coefficients(data):
     x, y = data
-
-    model = logistic_regression()
+    model = LogisticRegression()
     model.fit(x, y)
-
-    probs = model.predict_probabilities(np.array([[0.0], [1.0]]))
-
-    assert probs[:, 1] == pytest.approx([1 / 4, 3 / 4], abs=1e-4)
-    assert probs[:, 0] == pytest.approx([3 / 4, 1 / 4], abs=1e-4)
+    assert model._beta == pytest.approx([np.log(1 / 3), 2 * np.log(3)], abs=1e-3)
 
 
-def test_logistic_regression_predict(data):
+def test_logistic_regression_probabilities_sum_to_one(data):
     x, y = data
-
-    model = logistic_regression()
+    model = LogisticRegression()
     model.fit(x, y)
-    np.testing.assert_array_equal(model.predict(np.array([[1.0], [0.0]])), [1, 0])
+    probs = model.predict_probabilities(x)
+    assert probs.shape == (8, 2)
+    assert probs.sum(axis=1) == pytest.approx(np.ones(8))
+
+
+@pytest.mark.parametrize(
+    "labels, expected",
+    [
+        (["no", "yes"], ["no", "yes"]),
+        ([-1, 1], [-1, 1]),
+        ([3, 7], [3, 7]),
+    ],
+)
+def test_logistic_regression_any_labels(data, labels, expected):
+    x, y = data
+    y_labels = np.array(labels)[y]
+    model = LogisticRegression()
+    model.fit(x, y_labels)
+    np.testing.assert_array_equal(model.predict(np.array([[0.0], [1.0]])), expected)
 
 
 def test_logistic_regression_separable_data_warns():
-    model = logistic_regression(max_iter=100)
-    with pytest.warns(RuntimeWarning):
+    model = LogisticRegression()
+    with pytest.warns(
+        RuntimeWarning, match="Did not converge in max_iter = 5000 iterations"
+    ):
         model.fit(np.array([[0.0], [1.0]]), np.array([0, 1]))
 
 
-def test_logistic_regression_exceptions(data):
+def test_logistic_regression_fit_exceptions(data):
     x, y = data
-
-    with pytest.raises(TypeError) as excep:
-        logistic_regression(learn_rate="0.5")
-    assert str(excep.value) == "'learn_rate' must be a number"
-
+    model = LogisticRegression()
     with pytest.raises(ValueError) as excep:
-        logistic_regression(learn_rate=0)
-    assert str(excep.value) == "'learn_rate' must be greater than 0"
-
-    with pytest.raises(TypeError) as excep:
-        logistic_regression(max_iter=10.5)
-    assert str(excep.value) == "'max_iter' must be an integer"
-
+        model.fit(x, y.reshape(-1, 1))
+    assert str(excep.value) == "y must be a 1D array with shape (n_samples)"
     with pytest.raises(ValueError) as excep:
-        logistic_regression(max_iter=0)
-    assert str(excep.value) == "'max_iter' must be greater than 0"
+        model.fit(x, np.zeros(8))
+    assert str(excep.value) == "Logistic regression needs exactly 2 classes (1 given)"
 
-    with pytest.raises(TypeError) as excep:
-        logistic_regression(tol="0.1")
-    assert str(excep.value) == "'tol' must be a number"
 
-    with pytest.raises(ValueError) as excep:
-        logistic_regression(tol=-1)
-    assert str(excep.value) == "'tol' must be greater than 0"
-
-    model = logistic_regression()
-
-    with pytest.raises(ValueError) as excep:
-        model.fit(x, np.array([0, 0, 0, 1, 0, 1, 1, 2]))
-    assert str(excep.value) == "Logistic regression only works with two classes 0/1"
-
-    with pytest.raises(ValueError) as excep:
-        model.fit(x, y[:3])
-    assert (
-        str(excep.value) == "Each point from x needs a result in y: same number of rows"
+def test_logistic_regression_bool_and_numpy_params():
+    with pytest.raises(TypeError):
+        LogisticRegression(learn_rate=True)
+    with pytest.raises(TypeError):
+        LogisticRegression(max_iter=True)
+    with pytest.raises(TypeError):
+        LogisticRegression(tol=False)
+    LogisticRegression(
+        learn_rate=np.float32(0.1), max_iter=np.int64(10), tol=np.float64(1e-3)
     )
-
-    with pytest.raises(ValueError) as excep:
-        model.predict(x)
-    assert str(excep.value) == "Cannot predict before training. Use '.fit()' first"
