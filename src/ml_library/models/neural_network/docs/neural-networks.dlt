@@ -2,7 +2,7 @@
   <title>Neural Networks</title>
 
   <intro>
-    Mathematical documentation for <c>ml_library.models.neural_network</c>.
+    Documentation for <c>ml_library.models.neural_network</c>.
     The module provides dense layers, activation functions, losses and
     optimizers. Its current estimator, <c>MLPRegressor</c>, combines these
     components into a regression network with one hidden layer and one output.
