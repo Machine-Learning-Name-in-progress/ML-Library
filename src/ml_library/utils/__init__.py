@@ -1,3 +1,5 @@
-from . import _random
+"""Shared utilities."""
 
-__all__ = ["_random"]
+from ._random import get_rng, set_seed
+
+__all__ = ["get_rng", "set_seed"]
