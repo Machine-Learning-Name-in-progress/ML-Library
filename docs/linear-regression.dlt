@@ -1,0 +1,132 @@
+<document lang="en" type="paper">
+  <chapter id="ch:linear-regression">
+    <title>Linear Regression</title>
+    <intro>
+      The library implements three linear regression estimators:
+      OrdinaryLeastSquares, Ridge and Lasso. They share a prediction rule,
+      but use different criteria to estimate its coefficients.
+    </intro>
+    <section id="linear-model">
+      <title>The model and shared interface</title>
+      For $X\in\mathbb{R}^{n\times p}$ and $y\in\mathbb{R}^n$, the prediction is
+      <equation>\hat y_i=\beta_0+\sum_{j=1}^p\beta_jx_{ij}.</equation>
+      Instantiate an estimator without arguments, then call fit with a
+      two-dimensional feature matrix and a one-dimensional target array.
+      All three fit methods return None. After fitting, <c>coef</c> contains
+      the $p$ slope coefficients and <c>intercept</c> contains the scalar intercept.
+      Accessing these properties before fitting raises RuntimeError.
+      <c>predict(X)</c> returns one prediction per row, using the same feature
+      order and count as training. Do not add a constant column when intercept=True.
+      The shared methods <c>RSS(X, y)</c>, <c>MSE(X, y)</c>,
+      <c>RMSE(X, y)</c> and <c>R2(X, y)</c> evaluate predictions against targets.
+      R2 raises ValueError when the targets are constant.
+    </section>
+    <section id="linear-ols">
+      <title>Ordinary least squares</title>
+      OrdinaryLeastSquares minimizes the residual sum of squares:
+      <equation>\operatorname{RSS}=\sum_{i=1}^n(y_i-\hat y_i)^2.</equation>
+      <c>fit(X, y, intercept=True)</c> optionally adds a column of ones.
+      If $A$ denotes this augmented matrix, or $X$ when no intercept is fitted,
+      the coefficients solve the normal equations
+      <equation>A^\top A\hat\beta=A^\top y.</equation>
+      The implementation uses numpy.linalg.solve and requires full column rank
+      of $A$, including the intercept column. Otherwise it raises ValueError.
+      With intercept=False, the fitted intercept is zero.
+      <proof collapsed="true">
+        Differentiating $\|y-A\beta\|_2^2$ gives
+        $-2A^\top(y-A\beta)$. At a minimum this gradient vanishes,
+        yielding the normal equations. Full column rank makes $A^\top A$
+        positive definite, so the solution is unique.
+      </proof>
+    </section>
+    <section id="linear-scaling">
+      <title>Scaling in Ridge and Lasso</title>
+      Both regularized estimators standardize the features and the target
+      internally, using training means and population standard deviations.
+      Zero standard deviations are replaced by one. Write $Z$ and $t$ for
+      these standardized arrays, and $b$ for their fitted coefficients.
+      The penalties below apply to these standardized coefficients, not directly
+      to the coefficients in the original units.
+      <equation>\beta_j=\frac{s_y}{s_j}b_j,\qquad
+        \beta_0=\bar y-\sum_j\bar x_j\beta_j.</equation>
+      The intercept is not penalized. The recovered coefficients allow predict
+      to accept inputs in their original units.
+      In the current implementation, intercept=False still centers X and y
+      internally but forces the final intercept to zero. On uncentered data,
+      this differs from solving the usual regression problem constrained to
+      pass through the origin. Use the default intercept=True unless that
+      behavior is specifically intended.
+    </section>
+    <section id="linear-ridge">
+      <title>Ridge</title>
+      Ridge adds a squared coefficient penalty:
+      <equation>\min_b\;\|t-Zb\|_2^2+\lambda\sum_{j=1}^p b_j^2.</equation>
+      <c>fit(X, y, lam, intercept=True)</c> requires a nonnegative lam.
+      It solves
+      <equation>(Z^\top Z+\lambda I)b=Z^\top t.</equation>
+      A positive lambda makes this matrix positive definite even when features
+      are linearly dependent. With lam=0, a singular system can still fail.
+      Larger penalties shrink the standardized coefficients toward zero,
+      trading flexibility for stability.
+    </section>
+    <section id="linear-lasso">
+      <title>Lasso</title>
+      Lasso uses an absolute coefficient penalty:
+      <equation>\min_b\;\|t-Zb\|_2^2+\lambda\sum_{j=1}^p|b_j|.</equation>
+      <c>fit(X, y, lam, intercept=True, eps=1e-4, max_iter=10000)</c>
+      requires nonnegative lam and eps and a positive integer iteration limit.
+      Unlike Ridge, the general problem has no single normal-equation formula.
+      The implementation uses coordinate descent, updating one coefficient
+      at a time by soft thresholding rather than an ordinary gradient step.
+      For a nonconstant standardized column $Z_j$, define
+      <equations>
+        r_j&=t-Zb+Z_jb_j,\\
+        z_j&=Z_j^\top r_j,\\
+        b_j&=\frac{\operatorname{sign}(z_j)\max(|z_j|-\lambda/2,0)}{n}.
+      </equations>
+      Here $Z_j^\top Z_j=n$ because population standard deviations are used.
+      The threshold can make coefficients exactly zero. A constant centered
+      column is zero and receives a zero coefficient.
+      <proof collapsed="true">
+        Holding the other coefficients fixed leaves the one-dimensional problem
+        $\|r_j-Z_ju\|_2^2+\lambda|u|$.
+        For $u>0$ its derivative is $2nu-2z_j+\lambda$;
+        for $u<0$ it is $2nu-2z_j-\lambda$.
+        At zero, the subgradient contains zero exactly when
+        $|z_j|\le\lambda/2$. These cases yield the update above.
+      </proof>
+      The stopping criterion compares the sum of absolute coefficient changes
+      between full sweeps with eps. The iteration counter advances per coordinate,
+      but the limit is checked between sweeps, so the last sweep can exceed
+      max_iter slightly. Reaching the limit does not itself certify convergence.
+    </section>
+    <section id="linear-example">
+      <title>Example</title>
+      <code lang="python" numbered="false">
+import numpy as np
+from ml_library import OrdinaryLeastSquares, Ridge, Lasso
+
+X = np.array([[1., -1.], [2., 5.], [0., -2.], [-3., 2.], [3., 4.]])
+y = np.array([1., 2., 3., 4., 5.])
+new_points = np.array([[0., 0.], [1., 2.]])
+
+ols = OrdinaryLeastSquares()
+ols.fit(X, y)
+ridge = Ridge()
+ridge.fit(X, y, lam=1.0)
+lasso = Lasso()
+lasso.fit(X, y, lam=0.1, eps=1e-4, max_iter=10000)
+
+for model in (ols, ridge, lasso):
+    print(type(model).__name__)
+    print(model.intercept, model.coef)
+    print(model.predict(new_points))
+      </code>
+      Choose lam using validation data rather than the final test set.
+      The objectives use a sum of squared errors, not its average; penalty
+      values are therefore not directly interchangeable with implementations
+      using a different normalization. For polynomial features, see
+      <link to="polynomial-regression.html">Polynomial Regression</link>.
+    </section>
+  </chapter>
+</document>

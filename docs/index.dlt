@@ -6,4 +6,10 @@
     and the derivations that explain the main design choices.
   </intro>
   <toc scope="project" depth="4"/>
+  <section id="documentation-process" numbered="false">
+    <title>Use of AI in documentation</title>
+    To make the library documentation accessible to a wider audience in English
+    and speed up its preparation, we wrote drafts in Brazilian Portuguese
+    and used AI to translate them into English.
+  </section>
 </document>

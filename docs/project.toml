@@ -2,6 +2,7 @@ inputs = [
   "index.dlt",
   "decision-trees.dlt",
   "neural-networks.dlt",
+  "linear-regression.dlt",
   "polynomial-regression.dlt",
   "pca.dlt",
   "kmeans.dlt",
