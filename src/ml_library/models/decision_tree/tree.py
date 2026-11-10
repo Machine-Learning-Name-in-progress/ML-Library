@@ -40,11 +40,11 @@ def _Alocate_node(impurity, impurity_choice, x: np.ndarray, y: np.ndarray, deapt
 
     node = _decision_tree_node(prediction, deapth)
 
-    if deapth >= max_deapth or _is_pure(y) or min_samples_split > np.size(y):
+    if deapth >= max_deapth or _is_pure(y) or min_samples_split > np.size(y): # then this should be a leaf
         return node
 
     best_split = _best_split(x,y,impurity, min_samples_leaf)
-    if best_split is None:
+    if best_split is None: # then this should be a leaf
         return node
 
     target_X, threshold = best_split
@@ -53,6 +53,7 @@ def _Alocate_node(impurity, impurity_choice, x: np.ndarray, y: np.ndarray, deapt
 
     left = x[:, target_X] <= threshold
 
+    # Alocate child nodes
     node.left = _Alocate_node(impurity,     impurity_choice, x[left],   y[left],    deapth+1, max_deapth, min_samples_split, min_samples_leaf)
     node.right = _Alocate_node(impurity,    impurity_choice, x[~left],  y[~left],   deapth+1, max_deapth, min_samples_split, min_samples_leaf)
     
@@ -89,9 +90,20 @@ class decision_tree:
         else: raise ValueError(f"impurity_type={impurity_type} isn't a default option")
 
     def fit(self, x: np.ndarray, y: np.ndarray):
+        """
+            Args:
+                x: the preditors data
+                y: the corresponding classes of x
+        """
         self._root = _Alocate_node(self._impurity, self._impurity_choice, x, y, 0, self._max_deaph, self._min_samples_split, self._min_samples_leaf)
 
     def predict(self, x:np.ndarray) -> np.ndarray:
+        """
+            Args:
+                x: a matrix with matching columns of the fitted matrix x
+            returs:
+                A np.ndarray y containing the predictions for each row
+        """
         if self._root is None:
             raise ValueError("[Root is not setted]: Call fit before calling predict")
         return self._root.predict(x)
