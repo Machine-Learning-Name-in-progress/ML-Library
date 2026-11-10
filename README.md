@@ -53,6 +53,10 @@ uv sync
 uv run pytest
 ```
 
+## Documentation
+
+[Decision Trees documentation](https://machine-learning-name-in-progress.github.io/ML-Library/)
+
 ## License
 
 [MIT](LICENSE)
