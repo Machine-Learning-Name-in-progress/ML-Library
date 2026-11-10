@@ -108,12 +108,5 @@
       and the right leaf predicts B by majority vote.
     </subsection>
   </section>
-
-  <section id="classifier">
-    <title>Classifier</title>
-  </section>
-<<<<<<< HEAD
   </chapter>
-=======
->>>>>>> origin
 </document>
