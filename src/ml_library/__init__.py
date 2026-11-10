@@ -12,9 +12,13 @@ from .models import (
     PolynomialRegression,
     Ridge,
     PCA,
+    decision_tree_classifier,
+    decision_tree_regressor
 )
 
 __all__ = [
+    "decision_tree_classifier",
+    "decision_tree_regressor",
     "metrics",
     "model_selection",
     "models",
