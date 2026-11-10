@@ -8,3 +8,9 @@ Implementation roadmap:
 """
 
 from .classifier import decision_tree_classifier
+from .regressor import decision_tree_regressor
+
+__all__ = [
+    "decision_tree_classifier",
+    "decision_tree_regressor"
+]
