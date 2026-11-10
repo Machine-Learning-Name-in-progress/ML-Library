@@ -35,12 +35,12 @@ class _decision_tree_node:
 
 
 
-def _Alocate_node(impurity, impurity_choice, x: np.ndarray, y: np.ndarray, deapth: int, max_deapth: int = 10, min_samples_split: int = 1, min_samples_leaf: int = 1) -> _decision_tree_node:
+def _Alocate_node(impurity, impurity_choice, x: np.ndarray, y: np.ndarray, deapth: int, max_depth: int = 10, min_samples_split: int = 1, min_samples_leaf: int = 1) -> _decision_tree_node:
     prediction = impurity_choice(y)
 
     node = _decision_tree_node(prediction, deapth)
 
-    if deapth >= max_deapth or _is_pure(y) or min_samples_split > np.size(y): # then this should be a leaf
+    if deapth >= max_depth or _is_pure(y) or min_samples_split > np.size(y): # then this should be a leaf
         return node
 
     best_split = _best_split(x,y,impurity, min_samples_leaf)
@@ -54,8 +54,8 @@ def _Alocate_node(impurity, impurity_choice, x: np.ndarray, y: np.ndarray, deapt
     left = x[:, target_X] <= threshold
 
     # Alocate child nodes
-    node.left = _Alocate_node(impurity,     impurity_choice, x[left],   y[left],    deapth+1, max_deapth, min_samples_split, min_samples_leaf)
-    node.right = _Alocate_node(impurity,    impurity_choice, x[~left],  y[~left],   deapth+1, max_deapth, min_samples_split, min_samples_leaf)
+    node.left = _Alocate_node(impurity,     impurity_choice, x[left],   y[left],    deapth+1, max_depth, min_samples_split, min_samples_leaf)
+    node.right = _Alocate_node(impurity,    impurity_choice, x[~left],  y[~left],   deapth+1, max_depth, min_samples_split, min_samples_leaf)
     
     return node
 
@@ -70,12 +70,12 @@ class decision_tree:
     _min_samples_split: int = 1
     _min_samples_leaf: int = 1
 
-    def __init__(self, max_deapth: int = 100, impurity_type: int = 1, min_samples_split: int = 1, min_samples_leaf: int = 1):
+    def __init__(self, max_depth: int = 100, impurity_type: int = 1, min_samples_split: int = 1, min_samples_leaf: int = 1):
         '''
             Args:
                 impurity_type (int): 1 for GINI and 2 for MSE
         '''
-        self._max_deaph = max_deapth
+        self._max_deaph = max_depth
         self._min_samples_leaf = min_samples_leaf
         self._min_samples_split = min_samples_split
 
