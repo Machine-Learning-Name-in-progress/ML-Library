@@ -1,0 +1,57 @@
+<document lang="en" type="paper">
+<chapter id="ch:polynomial-regression">
+<title>Polynomial Regression</title>
+<intro>PolynomialRegression fits a polynomial of a predefined degree to scalar input and target pairs. It constructs the powers of the input and delegates fitting to OLS, Ridge or Lasso.</intro>
+<section id="polynomial-regression-1">
+<title>The model</title>
+For $n$ pairs $(x_i,y_i)$ and degree $d$, the model is
+<equation>\hat y_i=\beta_0+\beta_1x_i+\cdots+\beta_dx_i^d.</equation>
+It is linear in its coefficients, although generally nonlinear in $x$.
+The design matrix $X\in\mathbb{R}^{n\times d}$ has entries $X_{ij}=x_i^j$, for $j=1,\ldots,d$.
+The column of ones is not included: the underlying regression model handles the intercept.
+</section>
+<section id="polynomial-regression-2">
+<title>Parameters</title>
+<table numbered="false">
+<header><column>Parameter</column><column>Type / default</column><column>Meaning</column></header>
+<row><column><c>degree</c></column><column>int, required</column><column>Positive polynomial degree.</column></row>
+<row><column><c>model_choice</c></column><column>str, 'ols'</column><column>One of 'ols', 'ridge' or 'lasso'.</column></row>
+<row><column><c>intercept</c></column><column>bool, True</column><column>Whether to fit $\beta_0$; otherwise it is zero.</column></row>
+<row><column><c>lam</c></column><column>float, 1.0</column><column>Positive regularization parameter for Ridge and Lasso.</column></row>
+<row><column><c>eps</c></column><column>float, 1e-4</column><column>Positive convergence tolerance for Lasso.</column></row>
+<row><column><c>max_iter</c></column><column>int, 10000</column><column>Positive iteration limit for Lasso.</column></row>
+</table>
+</section>
+<section id="polynomial-regression-3">
+<title>Fitted attributes</title>
+<table numbered="false">
+<header><column>Attribute</column><column>Shape</column><column>Meaning</column></header>
+<row><column><c>coef</c></column><column>(degree,)</column><column>$\beta_1,\ldots,\beta_d$, in increasing power order.</column></row>
+<row><column><c>model_intercept</c></column><column>scalar</column><column>The intercept $\beta_0$.</column></row>
+<row><column><c>coefficients</c></column><column>(degree + 1,)</column><column>Property returning the intercept followed by the other coefficients.</column></row>
+</table>
+</section>
+<section id="polynomial-regression-4">
+<title>Methods</title>
+<c>fit(x, y)</c> accepts one-dimensional arrays of equal length, constructs the design matrix and fits the chosen estimator. It returns None. <c>predict(x)</c> evaluates the fitted polynomial at each input and returns a one-dimensional array. Calling predict before fit raises RuntimeError.
+</section>
+<section id="polynomial-regression-5">
+<title>Example</title>
+<code lang="python" numbered="false">
+import numpy as np
+from ml_library import PolynomialRegression
+
+x = np.linspace(-1, 1, 20)
+y = 1 + 2 * x - 3 * x**2 + 0.5 * x**3
+model = PolynomialRegression(degree=3)
+model.fit(x, y)
+print(model.coefficients)
+print(model.predict(np.array([0.0, 0.5, 1.0])))
+</code>For regularization, for example, use <c>PolynomialRegression(degree=6, model_choice="lasso", lam=0.05)</c>.
+</section>
+<section id="polynomial-regression-6">
+<title>Practical interpretation</title>
+Higher degrees increase flexibility but can increase variance and numerical instability. Low degrees can underfit. The Runge phenomenon concerns high-degree interpolation, particularly on equally spaced nodes; it is not an inevitable property of every polynomial least-squares fit. Extrapolation can nevertheless be unreliable. Ridge and Lasso penalize large coefficients and can reduce variance. Choose the degree and regularization by validation. Scaling the input can improve conditioning; estimate any preprocessing using training data only.
+</section>
+</chapter>
+</document>

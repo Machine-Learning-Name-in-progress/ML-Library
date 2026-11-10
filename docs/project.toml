@@ -2,6 +2,11 @@ inputs = [
   "index.dlt",
   "decision-trees.dlt",
   "neural-networks.dlt",
+  "polynomial-regression.dlt",
+  "pca.dlt",
+  "kmeans.dlt",
+  "lda.dlt",
+  "qda.dlt",
 ]
 out = "."
 

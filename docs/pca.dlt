@@ -1,0 +1,63 @@
+<document lang="en" type="paper">
+<chapter id="ch:pca">
+<title>Principal Component Analysis</title>
+<intro>PCA is an unsupervised dimensionality reduction method. It projects observations onto orthogonal directions of high variance, using covariance eigenvectors or singular value decomposition.</intro>
+<section id="pca-1">
+<title>The model</title>
+Let $X\in\mathbb{R}^{n\times p}$ contain one observation per row. With column means $\bar x$, define $X_c=X-\mathbf{1}_n\bar x^\top$ and
+<equation>C=\frac{1}{n-1}X_c^\top X_c.</equation>
+The covariance matrix is symmetric and positive semidefinite. PCA chooses $W\in\mathbb{R}^{p\times k}$ with orthonormal columns and projects the data as $Z=X_cW$. If standardization is enabled, the same construction applies after dividing nonconstant columns by their training standard deviations.
+</section>
+<section id="pca-2">
+<title>Eigenvectors and SVD</title>
+The eigen solver orders the eigenvectors of $C$ by decreasing eigenvalue. A unit direction $w$ has sample variance $w^\top Cw$; the first component maximizes this quantity, and subsequent components maximize it subject to orthogonality to earlier ones.
+For the reduced singular value decomposition $X_c=U S V^\top$,
+<equation>C=V\frac{S^2}{n-1}V^\top.</equation>
+The SVD solver therefore takes the leading columns of $V$.
+For distinct eigenvalues the directions agree up to sign. Repeated eigenvalues allow different orthonormal bases of the same eigenspace; if the truncation cuts through a tie, even the selected subspace need not be unique.
+<proposition id="prop:pca-variance"><title>Maximum variance direction</title>The largest possible value of $w^\top Cw$, subject to $\|w\|_2=1$, is the largest eigenvalue of $C$.</proposition>
+<proof of="prop:pca-variance" collapsed="true">Expand $w=\sum_j a_jv_j$ in an orthonormal eigenbasis. Then $\sum_j a_j^2=1$ and $w^\top Cw=\sum_j\lambda_ja_j^2\le\lambda_1$. Equality holds for a leading eigenvector.</proof>
+</section>
+<section id="pca-3">
+<title>Parameters</title>
+<table numbered="false">
+<header><column>Parameter</column><column>Type / default</column><column>Meaning</column></header>
+<row><column><c>n_components</c></column><column>int, required</column><column>Positive number of components, at most the number of features.</column></row>
+<row><column><c>solver</c></column><column>str, 'eigen'</column><column>Either 'eigen' or 'svd'.</column></row>
+<row><column><c>standardize</c></column><column>bool, False</column><column>Whether to scale features before fitting.</column></row>
+</table>
+</section>
+<section id="pca-4">
+<title>Fitted attributes</title>
+<table numbered="false">
+<header><column>Attribute</column><column>Shape</column><column>Meaning</column></header>
+<row><column><c>components</c></column><column>(p, k)</column><column>Directions, one per column, in the feature coordinates used for fitting.</column></row>
+<row><column><c>mean</c></column><column>(p,)</column><column>Training column means.</column></row>
+<row><column><c>std</c></column><column>(p,) or None</column><column>Training standard deviations; None without standardization.</column></row>
+<row><column><c>evr</c></column><column>(k,)</column><column>Explained variance ratio for each retained component.</column></row>
+</table>All four attributes are None before fitting. With standardization, directions refer to standardized coordinates. The SVD implementation uses a reduced decomposition and returns at most min(n, p) directions, even if a larger number is requested.
+</section>
+<section id="pca-5">
+<title>Methods</title>
+<c>fit(X)</c> estimates the centering, optional scaling and directions from a two-dimensional array. It returns None. <c>transform(X)</c> applies the fitted preprocessing and projects new data; calling it before fit raises RuntimeError. <c>fit_transform(X)</c> performs both steps on the same data.
+</section>
+<section id="pca-6">
+<title>Example</title>
+<code lang="python" numbered="false">
+import numpy as np
+from ml_library import PCA
+
+rng = np.random.default_rng(67)
+X = rng.normal(size=(100, 3)) @ np.array([[3, 0, 0], [1, 1, 0], [0, 0, 0.2]])
+pca = PCA(n_components=2)
+Z = pca.fit_transform(X)
+print(pca.components)
+print(pca.evr)
+</code>
+</section>
+<section id="pca-7">
+<title>Practical interpretation</title>
+A common descriptive choice retains enough components for cumulative explained variance of 0.90 or 0.95. For prediction, select the number by validation: PCA does not use the target and can discard predictive information. Fit PCA only on training data. Standardization is useful when scales differ; constant columns are centered but not divided by zero. With zero total variance, explained variance ratios are undefined. Use at least two observations. In the current eigen implementation, a single feature produces a scalar covariance through NumPy and is not handled as a matrix; the SVD solver avoids that specific issue.
+</section>
+</chapter>
+</document>

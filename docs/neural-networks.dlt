@@ -5,8 +5,10 @@
   <intro>
     Documentation for <c>ml_library.models.neural_network</c>.
     The module provides dense layers, activation functions, losses and
-    optimizers. Its current estimator, <c>MLPRegressor</c>, combines these
-    components into a regression network with one hidden layer and one output.
+    optimizers. <c>MLPRegressor</c> provides single-output regression, while
+    <c>MLPClassifier</c> provides multiclass classification. Both use one hidden layer.
+    The classifier and newer activations described here refer to the implementation
+    integrated into main; the documentation branch does not itself include those model files.
   </intro>
 
   <section id="model">
@@ -32,7 +34,11 @@
       layers, an activation instance and an optimizer, so fitting again
       restarts training. <c>predict</c> returns one value per sample.
       Other losses and optimizers described below are standalone components
-      and are not configuration options of the current estimator.
+      and are not configuration options of the regressor. The classifier allows
+      an optimizer class to be selected. Both estimators return themselves from
+      fit and record one loss value per epoch in <c>loss_history</c>.
+      The history is reset by every fit and measures training loss before each update,
+      not validation performance.
 
       The public <c>activation</c> attribute holds the activation class,
       such as <c>Tanh</c>. The private <c>_activation_instance</c> holds the
@@ -41,6 +47,82 @@
       forward pass, which must precede the corresponding backward pass.
       Layer weights, biases and their gradients form the public interface
       used by optimizers; temporary caches and optimizer history are internal.
+    </subsection>
+  </section>
+
+
+  <section id="regression-example">
+    <title>Regression example</title>
+    This example fits a small regression network and predicts values for new inputs.
+    <code lang="python" numbered="false">
+import numpy as np
+from ml_library.models.neural_network import MLPRegressor
+from ml_library.utils._random import set_seed
+
+X = np.linspace(-1, 1, 30).reshape(-1, 1)
+y = 2 * X[:, 0] + 1
+set_seed(42)
+model = MLPRegressor(hidden_units=8, learning_rate=0.05, epochs=1000)
+model.fit(X, y)
+print(model.predict(np.array([[-0.5], [0.0], [0.5]])))
+    </code>
+    Inputs have shape (n_samples, n_features), and targets have shape (n_samples,).
+    Predictions approximate the target relation; this example illustrates usage,
+    not an evaluation on held-out data.
+  </section>
+
+  <section id="classification-model">
+    <title>The classification model</title>
+    For $K$ classes, the output weights have shape $h\times K$. The hidden
+    representation is mapped to logits $Z$, and Softmax produces probabilities:
+    <equation>p_{ik}=\frac{\exp(Z_{ik}-m_i)}{\sum_{j=1}^K\exp(Z_{ij}-m_i)},\qquad m_i=\max_j Z_{ij}.</equation>
+    Subtracting the row maximum leaves probabilities unchanged and avoids
+    overflow in exponentiation. Prediction selects the class with largest probability.
+    <subsection id="classifier-interface">
+      <title>Training and prediction</title>
+      <c>MLPClassifier</c> defaults to 32 hidden units, learning_rate=0.01,
+      300 epochs, ReLU and Adam. The optional lr argument overrides learning_rate.
+      The activation and optimizer arguments are classes, not fitted instances;
+      an optimizer must accept lr and provide step(layers). SGD and Adam are supported,
+      as is AdamW through the same interface. Training uses the complete batch.
+      <c>fit(X, y)</c> accepts numeric or string labels, or a matrix of one-hot targets.
+      For labels, classes are sorted; for one-hot targets, column indices are the classes.
+      Supply valid one-hot rows: the implementation checks finiteness and dimensions
+      but does not enforce binary entries or a row sum of one.
+      <c>predict_proba(X)</c> returns an $(n,K)$ probability matrix and
+      <c>predict(X)</c> returns a one-dimensional array of class labels.
+    </subsection>
+    <subsection id="classifier-gradient">
+      <title>Softmax and cross entropy</title>
+      For one observation, the Softmax Jacobian is
+      <equation>\frac{\partial p_k}{\partial z_j}=p_k(\mathbf{1}_{\{k=j\}}-p_j).</equation>
+      Its backward operation with incoming gradient $g$ is
+      $p\odot(g-\langle g,p\rangle\mathbf{1})$, avoiding an explicit Jacobian matrix.
+      For one-hot labels and the average loss
+      $L=-n^{-1}\sum_{i,k}y_{ik}\log p_{ik}$, the ideal unclipped composition gives
+      <equation>\frac{\partial L}{\partial Z_{ik}}=\frac{p_{ik}-y_{ik}}{n}.</equation>
+      The implementation propagates through separate loss and Softmax components.
+      Its probability clipping means the simplified expression above need not
+      match the implemented gradient at extreme probabilities.
+    </subsection>
+    <subsection id="classifier-example">
+      <title>Example</title>
+      <code lang="python" numbered="false">
+import numpy as np
+from ml_library.models.neural_network import MLPClassifier, ReLU, Adam
+from ml_library.utils._random import set_seed
+
+X = np.array([[-2., -1.], [-1., -2.], [2., 1.], [1., 2.], [-2., 2.], [-1., 3.]])
+y = np.array(["a", "a", "b", "b", "c", "c"])
+set_seed(42)
+model = MLPClassifier(hidden_units=8, activation=ReLU, optimizer=Adam)
+model.fit(X, y)
+print(model.predict(X))
+print(model.predict_proba(X))
+print(model.loss_history[-1])
+      </code>
+      This small example illustrates the API; prediction on the training set
+      does not evaluate generalization.
     </subsection>
   </section>
 
@@ -109,7 +191,7 @@
 
   <section id="activations">
     <title>Activation functions</title>
-    For $H=\phi(Z)$ and incoming gradient $G=\partial L/\partial H$,
+    For elementwise activations $H=\phi(Z)$ and incoming gradient $G=\partial L/\partial H$,
     the chain rule gives
     <equation>
       \frac{\partial L}{\partial Z}=G\odot\phi'(Z),
@@ -128,6 +210,12 @@
     Sigmoid evaluates equivalent expressions using $e^{-|z|}$ to avoid
     exponential overflow. Sigmoid and Tanh save their outputs to reuse them
     in the derivative. Linear passes the incoming gradient through unchanged.
+    <c>LeakyReLU</c> uses $\phi(z)=z$ for $z>0$ and $\phi(z)=\alpha z$
+    otherwise, with default $\alpha=0.01$. Its derivative is one on positive
+    inputs and alpha on negative inputs; backward chooses alpha at zero.
+    A positive alpha retains a gradient on the negative side, mitigating the
+    inactive-unit problem of ReLU. Softmax instead couples all class coordinates
+    and uses the Jacobian described in the classification section.
     A linear hidden activation makes the whole regression model affine;
     nonlinear activations allow the network to represent nonlinear relations.
   </section>
@@ -163,8 +251,8 @@
         \frac{\partial L_{\mathrm{CCE}}}{\partial p_{ik}}=-\frac{y_{ik}}{p_{ik}}.
       </equation>
       The caller supplies probabilities; these classes do not convert logits
-      into probabilities. In particular, the module currently has no Softmax
-      component or neural network classifier.
+      into probabilities. The classifier uses Softmax outputs and divides the categorical loss
+      and its gradient by the number of samples to obtain a batch average.
 
       In code, both losses clip probabilities to
       $[\varepsilon,1-\varepsilon]$ before evaluating logs or denominators.
