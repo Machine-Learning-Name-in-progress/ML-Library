@@ -1,0 +1,128 @@
+"""Tests for optimizers."""
+
+import numpy as np
+import pytest
+from ml_library.models.neural_network.layers import Dense
+from ml_library.models.neural_network.optimizers import SGD, Adam, AdamW
+
+
+def test_sgd_invalid_parameters() -> None:
+    """Test if invalid learning rate or momentum raises ValueError."""
+    with pytest.raises(ValueError):
+        SGD(lr=0.0)
+    with pytest.raises(ValueError):
+        SGD(lr=-0.01)
+    with pytest.raises(ValueError):
+        SGD(lr=0.01, momentum=-0.5)
+    with pytest.raises(ValueError):
+        SGD(lr=0.01, momentum=1.0)
+
+
+def test_sgd_step_on_dense_layer() -> None:
+    """Test SGD step updating weights and bias on a Dense layer."""
+    layer = Dense(n_inputs=2, n_outputs=2)
+    layer.weights = np.array([[1.0, 2.0], [3.0, 4.0]])
+    layer.bias = np.array([[0.5, -0.5]])
+
+    layer.grad_weights = np.array([[0.5, -1.0], [2.0, 0.0]])
+    layer.grad_bias = np.array([[1.0, -2.0]])
+
+    optimizer = SGD(lr=0.1, momentum=0.0)
+    optimizer.step([layer])
+
+    expected_weights = np.array([[0.95, 2.1], [2.8, 4.0]])
+    expected_bias = np.array([[0.4, -0.3]])
+
+    np.testing.assert_allclose(layer.weights, expected_weights, rtol=1e-7)
+    np.testing.assert_allclose(layer.bias, expected_bias, rtol=1e-7)
+
+
+def test_sgd_momentum_update() -> None:
+    """Test SGD update with momentum across two consecutive steps."""
+    optimizer = SGD(lr=0.1, momentum=0.9)
+    w = np.array([10.0])
+    grad = np.array([2.0])
+
+    w = optimizer.update(w, grad, key="w")
+    np.testing.assert_allclose(w, np.array([9.8]), rtol=1e-7)
+
+    w = optimizer.update(w, grad, key="w")
+    np.testing.assert_allclose(w, np.array([9.42]), rtol=1e-7)
+
+
+def test_sgd_parabola_convergence() -> None:
+    """Test SGD convergence on a simple parabola f(w) = w^2."""
+    optimizer = SGD(lr=0.1, momentum=0.5)
+    w = np.array([5.0, -3.0])
+
+    for _ in range(100):
+        grad = 2.0 * w
+        w = optimizer.update(w, grad, key="parabola")
+
+    np.testing.assert_allclose(w, np.zeros_like(w), atol=1e-6)
+
+
+def test_adam_invalid_parameters() -> None:
+    """Test if invalid Adam AND AdamW hyperparameters raise ValueError."""
+    with pytest.raises(ValueError):
+        Adam(lr=0.001, beta1=1.0)
+    with pytest.raises(ValueError):
+        Adam(lr=0.001, beta2=-0.1)
+    with pytest.raises(ValueError):
+        Adam(lr=0.001, eps=0.0)
+    with pytest.raises(ValueError):
+        AdamW(lr=0.001, weight_decay=-0.01)
+
+
+def test_adam_parabola_convergence() -> None:
+    """Test if Adam converges on a simple parabola f(w) = w^2."""
+    optimizer = Adam(lr=0.5)
+    w = np.array([5.0, -3.0])
+
+    for _ in range(200):
+        grad = 2.0 * w
+        w = optimizer.update(w, grad, key="parabola_adam")
+
+    np.testing.assert_allclose(w, np.zeros_like(w), atol=1e-4)
+
+
+def test_adamw_parabola_convergence() -> None:
+    """Test AdamW weight decay and convergence on f(w) = w^2."""
+    optimizer = AdamW(lr=0.5, weight_decay=0.05)
+    w = np.array([5.0, -3.0])
+
+    for _ in range(200):
+        grad = 2.0 * w
+        w = optimizer.update(w, grad, key="layer_0_weights")
+
+    np.testing.assert_allclose(w, np.zeros_like(w), atol=1e-4)
+
+
+def test_shape_and_weight_decay_adamw() -> None:
+    """Test AdamW weight decay and shape consistency on Dense layer."""
+    layer = Dense(n_inputs=2, n_outputs=2)
+    layer.weights = np.array([[1.0, 2.0], [3.0, 4.0]])
+    layer.bias = np.array([[0.5, -0.5]])
+
+    layer.grad_weights = np.array([[0.5, -1.0], [2.0, 0.0]])
+    layer.grad_bias = np.array([[1.0, -2.0]])
+
+    optimizer = AdamW(lr=0.1, weight_decay=0.05)
+    optimizer.step([layer])
+
+    expected_weights = np.array([[0.895, 2.09], [2.885, 3.98]])
+    expected_bias = np.array([[0.4, -0.4]])
+
+    np.testing.assert_allclose(layer.weights, expected_weights, rtol=1e-7)
+    np.testing.assert_allclose(layer.bias, expected_bias, rtol=1e-7)
+
+
+# To evitate duplicate codes:
+@pytest.mark.parametrize("optimizer", [SGD, Adam, AdamW])
+def test_optimizer_shape_validation(optimizer) -> None:
+    """Test that mismatched param and grad shapes raise ValueError."""
+    param = np.zeros((2, 2))
+    grad = np.zeros((2, 3))
+
+    with pytest.raises(ValueError, match="shapes must match"):
+        optimizer(lr=0.01).update(param, grad)

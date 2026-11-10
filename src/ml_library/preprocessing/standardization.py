@@ -46,8 +46,8 @@ def standardization(
                 )
 
     # Machine precision of float64 (about 2.2e-16) and number of samples
-    eps = np.finfo(np.float64).eps  # <- novo
-    n = len(df)  # <- novo
+    eps = np.finfo(np.float64).eps
+    n = len(df)
 
     # Dict to save metrics for each column
     metrics = {}

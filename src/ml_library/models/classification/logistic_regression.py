@@ -8,6 +8,9 @@ class LogisticRegression:
     Logistic regression classification model for two classes, trained by gradient
     ascent on the log-likelihood.
 
+    Need to standardize the features (x) before calling fit() to
+    prevent exp(-z) overflow.
+
     The labels can be any two values (e.g. 0/1, -1/1, "no"/"yes"). They are sorted
     (numerically or alphabetically) and the second one is the positive class.
 
