@@ -8,6 +8,7 @@ inputs = [
   "kmeans.dlt",
   "lda.dlt",
   "qda.dlt",
+  "regression-metrics.dlt",
 ]
 out = "."
 
