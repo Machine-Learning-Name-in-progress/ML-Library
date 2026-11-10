@@ -1,0 +1,59 @@
+<document lang="en" type="paper">
+<chapter id="ch:qda">
+<title>Quadratic Discriminant Analysis</title>
+<intro>QDA is a supervised Gaussian classifier. It models each class with its own mean and its own covariance.</intro>
+<section id="qda-1">
+<title>The model</title>
+For $K$ classes, training estimates the prior $\hat\pi_k=n_k/n$ and class mean $\hat\mu_k$. Prediction selects the class with largest discriminant score. Each class has its own covariance $\Sigma_k$. The score is
+<equation>\delta_k(x)=-\frac12\log|\Sigma_k|-\frac12(x-\mu_k)^\top\Sigma_k^{-1}(x-\mu_k)+\log\pi_k.</equation>
+The training covariance of class $k$ divides the sum of centered outer products by $n_k-1$. Pairwise decision boundaries are quadratic; in two dimensions they may be ellipses, parabolas or hyperbolas.
+</section>
+<section id="qda-2">
+<title>From scores to probabilities</title>
+Bayes' rule combines each Gaussian density with its class prior. Taking logarithms and dropping terms common to all classes yields the discriminant scores. The posterior probabilities are
+<equation>p_k(x)=\frac{\exp(\delta_k(x)-m)}{\sum_j\exp(\delta_j(x)-m)},\qquad m=\max_j\delta_j(x).</equation>
+Subtracting the maximum leaves the ratios unchanged and improves numerical stability. These are model-based probabilities; they need not be calibrated when the assumptions are inaccurate.
+</section>
+<section id="qda-3">
+<title>Regularization</title>
+The only constructor parameter is <c>reg_param</c>, a float in $[0,1]$, defaulting to 0. For each estimated covariance $C$, it applies
+<equation>C_r=(1-r)C+r\operatorname{diag}(C).</equation>
+Here diag(C) means a diagonal matrix retaining the variances. At zero the covariance is unchanged; at one correlations are discarded. This is not addition of a multiple of the identity.
+</section>
+<section id="qda-4">
+<title>Fitted attributes</title>
+<table numbered="false">
+<header><column>Attribute</column><column>Shape</column><column>Meaning</column></header>
+<row><column><c>classes</c></column><column>(K,)</column><column>Sorted numeric or string class labels.</column></row>
+<row><column><c>priors</c></column><column>(K,)</column><column>Training class proportions.</column></row>
+<row><column><c>means</c></column><column>(K, p)</column><column>Class means.</column></row>
+<row><column><c>elements_per_class</c></column><column>(K,)</column><column>Class sample counts.</column></row>
+<row><column><c>covariances</c></column><column>List of K (p, p) matrices</column><column>Regularized covariance estimates.</column></row>
+</table>Access before fitting raises RuntimeError.
+</section>
+<section id="qda-5">
+<title>Methods</title>
+<c>fit(X, y)</c> takes a two-dimensional NumPy array of shape (n_samples, n_features) and a one-dimensional array of numeric or string labels. It returns the estimator. <c>predict(X)</c> returns labels with shape (n_samples,). <c>decision(X)</c> returns scores with shape (n_samples, n_classes). Compare scores across classes within the same model. <c>predict_probabilities(X)</c> returns probabilities of the same matrix shape; column k corresponds to classes[k] and each row sums to one.
+</section>
+<section id="qda-6">
+<title>Example</title>
+<code lang="python" numbered="false">
+import numpy as np
+from ml_library import QDA
+
+X = np.array([[0.0, 0.1], [0.2, -0.1], [-0.1, 0.0], [0.1, 0.2],
+              [3.0, 0.0], [-3.0, 0.5], [0.0, 3.0], [0.4, -3.0]])
+y = np.array(["center"] * 4 + ["edge"] * 4)
+new_points = np.array([[0.0, 0.0], [2.5, 2.5]])
+model = QDA()
+model.fit(X, y)
+print(model.predict(new_points))
+print(model.predict_probabilities(new_points))
+</code>The classes have similar centers but different dispersion. A hyperplane cannot enclose the central group; QDA can form an elliptical boundary around it. See <link to="https://github.com/Machine-Learning-Name-in-progress/ML-Library/blob/main/examples/classification/QDA.py">the plotting example</link>.
+</section>
+<section id="qda-7">
+<title>Practical interpretation</title>
+Each class needs at least two samples. QDA estimates more covariance parameters than LDA and can be unstable with small classes. An unregularized class covariance is necessarily singular when the class sample count is at most the number of features. Regularization can help when variances are positive, but does not repair a zero-variance feature in that class. Consider <link to="lda.html">LDA</link> when covariance estimation is unreliable. Use x.reshape(1, -1) for a single observation. Select regularization using training/validation data, without using the test labels.
+</section>
+</chapter>
+</document>

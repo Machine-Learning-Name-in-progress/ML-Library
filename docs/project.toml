@@ -1,0 +1,18 @@
+inputs = [
+  "index.dlt",
+  "decision-trees.dlt",
+  "neural-networks.dlt",
+  "linear-regression.dlt",
+  "polynomial-regression.dlt",
+  "pca.dlt",
+  "kmeans.dlt",
+  "lda.dlt",
+  "qda.dlt",
+  "regression-metrics.dlt",
+]
+out = "."
+
+[document]
+lang = "en"
+theme-accent = "red"
+theme-mode = "light"

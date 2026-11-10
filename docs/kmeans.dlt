@@ -1,0 +1,55 @@
+<document lang="en" type="paper">
+<chapter id="ch:kmeans">
+<title>K-Means</title>
+<intro>Kmeans is an unsupervised clustering estimator. Each observation is assigned to the nearest centroid in Euclidean distance. Initialization uses K-Means++.</intro>
+<section id="kmeans-1">
+<title>Objective and updates</title>
+For points $x_i\in\mathbb{R}^p$, assignments $z_i\in\{1,\ldots,k\}$ and centroids $\mu_j$, the objective is
+<equation>J=\sum_{i=1}^n\|x_i-\mu_{z_i}\|_2^2.</equation>
+Each iteration assigns every point to its nearest centroid and then replaces each nonempty cluster's centroid by its mean. Iteration stops when assignments no longer change or max_iter is reached. An empty cluster keeps its previous centroid.
+<proposition id="prop:kmeans-mean"><title>The mean minimizes squared distances</title>For a fixed nonempty cluster $S$, its mean $\bar x_S$ minimizes $\sum_{i\in S}\|x_i-\mu\|_2^2$.</proposition>
+<proof of="prop:kmeans-mean" collapsed="true">Expanding around the mean gives $\sum_{i\in S}\|x_i-\mu\|_2^2=\sum_{i\in S}\|x_i-\bar x_S\|_2^2+|S|\|\mu-\bar x_S\|_2^2$, because centered deviations sum to zero. The last term is minimized at the mean.</proof>
+Each assignment and centroid update does not increase the objective in exact arithmetic. This does not guarantee a global minimum.
+</section>
+<section id="kmeans-2">
+<title>Initialization</title>
+K-Means++ samples the first centroid uniformly from the observations. Subsequent points are sampled with probability $D_i^2/\sum_j D_j^2$, where $D_i$ is the distance to the closest selected centroid. If all distances vanish, the implementation samples a point uniformly. This spreads the initial centroids and can improve solutions relative to uniform initialization, but does not guarantee faster convergence on every dataset.
+</section>
+<section id="kmeans-3">
+<title>Parameters</title>
+<table numbered="false">
+<header><column>Parameter</column><column>Type / default</column><column>Meaning</column></header>
+<row><column><c>k</c></column><column>int, required</column><column>Number of clusters; at least one and at most the number of observations.</column></row>
+<row><column><c>seed</c></column><column>None, int or np.random.Generator</column><column>Initialization generator or seed. None uses the library generator.</column></row>
+<row><column><c>max_iter</c></column><column>int, 300</column><column>Maximum number of iterations; use a positive value.</column></row>
+</table>
+</section>
+<section id="kmeans-4">
+<title>Attributes and methods</title>
+<table numbered="false">
+<header><column>Attribute</column><column>Shape</column><column>Meaning</column></header>
+<row><column><c>centroids</c></column><column>(k, n_features)</column><column>Cluster centers.</column></row>
+<row><column><c>clusters</c></column><column>(n_points,)</column><column>Cluster index for each training point.</column></row>
+</table>Both properties raise RuntimeError before fitting. <c>fit(points)</c> accepts a two-dimensional NumPy array and returns the estimator. <c>predict(new_points)</c> assigns each point to the nearest fitted centroid; the feature count must match training.
+</section>
+<section id="kmeans-5">
+<title>Example</title>
+<code lang="python" numbered="false">
+import numpy as np
+from ml_library import Kmeans
+
+X = np.array([[1.0, 1.0], [1.5, 2.0], [1.2, 0.8],
+              [8.0, 8.0], [8.5, 7.5], [7.8, 8.2]])
+km = Kmeans(k=2, seed=42)
+km.fit(X)
+print(km.centroids)
+print(km.clusters)
+print(km.predict(np.array([[0.0, 0.0], [9.0, 9.0]])))
+</code>See <link to="https://github.com/Machine-Learning-Name-in-progress/ML-Library/blob/main/examples/unsupervised/kmeans.py">the plotting example</link>.
+</section>
+<section id="kmeans-6">
+<title>Practical interpretation</title>
+Use x.reshape(1, -1) for one point, or x.reshape(-1, 1) for one feature. For k = 1 the centroid is the overall mean; for k equal to the sample count every point becomes a centroid. A warning indicates that max_iter was reached without convergence. In that case, stored assignments precede the last centroid update and may differ from predict on the training points. Initialization affects the result; use a seed for reproducibility and compare several starts if needed. Scale features when their units differ. Cluster numbers are arbitrary identifiers, not supervised class labels.
+</section>
+</chapter>
+</document>

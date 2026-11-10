@@ -1,0 +1,129 @@
+<document lang="en" type="paper">
+  <chapter id="ch:regression-metrics">
+    <title>Regression Metrics</title>
+    <intro>
+      These standalone functions compare observed targets with predictions.
+      For one-dimensional inputs, each returns a scalar score. No estimator
+      needs to be instantiated.
+    </intro>
+    <section id="metrics-notation">
+      <title>Notation and inputs</title>
+      Let $y=(y_1,\ldots,y_n)$ denote observations, $\hat y$ predictions and
+      $\bar y=n^{-1}\sum_i y_i$ the mean of the supplied observations.
+      The parameters y_true and y_pred accept numeric lists, tuples or NumPy
+      arrays, converted to floating point. Supply nonempty, finite,
+      one-dimensional arrays of equal length. The implementation checks
+      conversion and length, but does not explicitly enforce dimensionality,
+      nonemptiness or finiteness; do not rely on it to reject all invalid inputs.
+      <c>total_sum_of_squares</c> takes only y_true. The additional parameter
+      k in <c>r_squared_adjusted</c> is the number of features excluding the intercept.
+    </section>
+    <section id="metrics-imports">
+      <title>Import</title>
+      <code lang="python" numbered="false">
+from ml_library.metrics.regression_metrics import (
+    mean_squared_error,
+    root_mean_squared_error,
+    mean_absolute_error,
+    mean_absolute_percentage_error,
+    r_squared,
+    r_squared_adjusted,
+    residual_sum_of_squares,
+    total_sum_of_squares,
+)
+      </code>
+    </section>
+    <section id="metrics-sums">
+      <title>RSS and TSS</title>
+      <c>residual_sum_of_squares(y_true, y_pred)</c> computes
+      <equation>\mathrm{RSS}=\sum_{i=1}^n(y_i-\hat y_i)^2.</equation>
+      This is the objective minimized by ordinary least squares.
+      <c>total_sum_of_squares(y_true)</c> computes
+      <equation>\mathrm{TSS}=\sum_{i=1}^n(y_i-\bar y)^2.</equation>
+      TSS is the smallest RSS among constant predictions on the supplied
+      observations and provides the reference for R squared.
+    </section>
+    <section id="metrics-squared-errors">
+      <title>MSE and RMSE</title>
+      <c>mean_squared_error(y_true, y_pred)</c> and
+      <c>root_mean_squared_error(y_true, y_pred)</c> compute
+      <equation>\mathrm{MSE}=\frac{\mathrm{RSS}}{n},\qquad
+        \mathrm{RMSE}=\sqrt{\mathrm{MSE}}.</equation>
+      Squaring gives large errors more weight, making these scores sensitive
+      to outliers. MSE has squared target units; RMSE has the same units as
+      the target. Smaller values indicate smaller prediction errors.
+    </section>
+    <section id="metrics-mae">
+      <title>MAE</title>
+      <c>mean_absolute_error(y_true, y_pred)</c> computes
+      <equation>\mathrm{MAE}=\frac1n\sum_{i=1}^n|y_i-\hat y_i|.</equation>
+      Absolute error penalizes deviations linearly and is less sensitive to
+      extreme errors than squared error. MAE has the target's units, and
+      any sample median minimizes the sum of absolute errors among constant predictions.
+    </section>
+    <section id="metrics-mape">
+      <title>MAPE</title>
+      <c>mean_absolute_percentage_error(y_true, y_pred)</c> computes
+      <equation>\mathrm{MAPE}=\frac{100}{n}\sum_{i=1}^n
+        \left|\frac{y_i-\hat y_i}{y_i}\right|.</equation>
+      The result is a percentage, not a proportion. The function raises
+      ValueError if any observed target is zero. Targets close to zero can
+      dominate the score. Although negative nonzero targets are accepted,
+      percentage interpretation is most meaningful when the target has a
+      meaningful zero and relative errors are appropriate. MAPE can exceed 100 percent.
+    </section>
+    <section id="metrics-r2">
+      <title>R squared</title>
+      <c>r_squared(y_true, y_pred)</c> compares RSS with the constant mean reference:
+      <equation>R^2=1-\frac{\mathrm{RSS}}{\mathrm{TSS}}.</equation>
+      A perfect prediction has score one. Zero means the same RSS as the
+      mean reference; a negative score means larger RSS. Thus this score is
+      not restricted to the interval from zero to one. Its reference mean is
+      computed from the supplied y_true, not from the training targets.
+      A variance-explained interpretation is standard for an in-sample OLS fit
+      with an intercept; for arbitrary predictions, read it as a relative
+      squared-error score. Constant targets make TSS zero, and the function
+      raises ValueError rather than returning a score.
+    </section>
+    <section id="metrics-adjusted-r2">
+      <title>Adjusted R squared</title>
+      <c>r_squared_adjusted(y_true, y_pred, k)</c> computes
+      <equation>R^2_{\mathrm{adj}}=1-\frac{\mathrm{RSS}/(n-k-1)}{\mathrm{TSS}/(n-1)}
+        =1-(1-R^2)\frac{n-1}{n-k-1}.</equation>
+      The usual degrees-of-freedom interpretation concerns a full-rank linear
+      model with k features and an intercept. Under the standard homoscedastic
+      linear-model assumptions, RSS divided by $n-k-1$ estimates the error variance.
+      Adding features cannot decrease training R squared for nested OLS fits
+      on the same observations with an intercept. This statement does not
+      apply to arbitrary models or to validation scores. Adjusted R squared
+      penalizes the extra parameters and can decrease.
+      The function requires a positive Python int for k and $n>k+1$.
+      NumPy integer scalars such as np.int64 are rejected. Constant targets
+      also raise ValueError. The formula is not a general complexity correction
+      for regularized models or neural networks, and does not replace validation.
+    </section>
+    <section id="metrics-example">
+      <title>Example</title>
+      <code lang="python" numbered="false">
+from ml_library.metrics.regression_metrics import (
+    mean_squared_error, root_mean_squared_error, mean_absolute_error,
+    mean_absolute_percentage_error, r_squared, r_squared_adjusted,
+)
+
+y_true = [3.0, -0.5, 2.0, 7.0]
+y_pred = [2.5, 0.0, 2.0, 8.0]
+
+print(mean_squared_error(y_true, y_pred))
+print(root_mean_squared_error(y_true, y_pred))
+print(mean_absolute_error(y_true, y_pred))
+print(mean_absolute_percentage_error(y_true, y_pred))
+print(r_squared(y_true, y_pred))
+print(r_squared_adjusted(y_true, y_pred, k=1))
+      </code>
+      No single score fully describes performance. Inspect errors and evaluate
+      on validation or test data: high training R squared does not establish
+      good generalization. Compare models on the same observations and choose
+      metrics that match the application.
+    </section>
+  </chapter>
+</document>

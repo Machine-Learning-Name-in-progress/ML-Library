@@ -1,0 +1,63 @@
+<document lang="en" type="paper">
+<chapter id="ch:lda">
+<title>Linear Discriminant Analysis</title>
+<intro>LDA is a supervised Gaussian classifier. It models each class with its own mean and a shared covariance.</intro>
+<section id="lda-1">
+<title>The model</title>
+For $K$ classes, training estimates the prior $\hat\pi_k=n_k/n$ and class mean $\hat\mu_k$. Prediction selects the class with largest discriminant score. All classes share a covariance $\Sigma$. The score is
+<equation>\delta_k(x)=x^\top\Sigma^{-1}\mu_k-\frac12\mu_k^\top\Sigma^{-1}\mu_k+\log\pi_k.</equation>
+The pooled covariance is
+<equation>\hat\Sigma=\frac{1}{n-K}\sum_{k=1}^K\sum_{i:y_i=k}(x_i-\hat\mu_k)(x_i-\hat\mu_k)^\top.</equation>
+The class-dependent part of the score is affine in $x$, so pairwise decision boundaries are hyperplanes.
+</section>
+<section id="lda-2">
+<title>From scores to probabilities</title>
+Bayes' rule combines each Gaussian density with its class prior. Taking logarithms and dropping terms common to all classes yields the discriminant scores. The posterior probabilities are
+<equation>p_k(x)=\frac{\exp(\delta_k(x)-m)}{\sum_j\exp(\delta_j(x)-m)},\qquad m=\max_j\delta_j(x).</equation>
+Subtracting the maximum leaves the ratios unchanged and improves numerical stability. These are model-based probabilities; they need not be calibrated when the assumptions are inaccurate.
+</section>
+<section id="lda-3">
+<title>Regularization</title>
+The only constructor parameter is <c>reg_param</c>, a float in $[0,1]$, defaulting to 0. For each estimated covariance $C$, it applies
+<equation>C_r=(1-r)C+r\operatorname{diag}(C).</equation>
+Here diag(C) means a diagonal matrix retaining the variances. At zero the covariance is unchanged; at one correlations are discarded. This is not addition of a multiple of the identity.
+</section>
+<section id="lda-4">
+<title>Fitted attributes</title>
+<table numbered="false">
+<header><column>Attribute</column><column>Shape</column><column>Meaning</column></header>
+<row><column><c>classes</c></column><column>(K,)</column><column>Sorted numeric or string class labels.</column></row>
+<row><column><c>priors</c></column><column>(K,)</column><column>Training class proportions.</column></row>
+<row><column><c>means</c></column><column>(K, p)</column><column>Class means.</column></row>
+<row><column><c>elements_per_class</c></column><column>(K,)</column><column>Class sample counts.</column></row>
+<row><column><c>covariances</c></column><column>(p, p)</column><column>Regularized covariance estimates.</column></row>
+<row><column><c>coef</c></column><column>(K, p)</column><column>Linear score coefficients.</column></row>
+<row><column><c>intercept</c></column><column>(K,)</column><column>Linear score intercepts.</column></row>
+</table>Access before fitting raises RuntimeError.
+</section>
+<section id="lda-5">
+<title>Methods</title>
+<c>fit(X, y)</c> takes a two-dimensional NumPy array of shape (n_samples, n_features) and a one-dimensional array of numeric or string labels. It returns the estimator. <c>predict(X)</c> returns labels with shape (n_samples,). <c>decision(X)</c> returns scores with shape (n_samples, n_classes). Compare scores across classes within the same model. <c>predict_probabilities(X)</c> returns probabilities of the same matrix shape; column k corresponds to classes[k] and each row sums to one.
+</section>
+<section id="lda-6">
+<title>Example</title>
+<code lang="python" numbered="false">
+import numpy as np
+from ml_library import LDA
+
+X = np.array([[1.0, 2.0], [1.5, 1.8], [1.2, 2.2], [0.8, 1.9],
+              [5.0, 6.0], [5.5, 5.8], [4.8, 6.3], [5.2, 6.1]])
+y = np.array(["a"] * 4 + ["b"] * 4)
+new_points = np.array([[1.0, 2.0], [5.0, 6.0]])
+model = LDA()
+model.fit(X, y)
+print(model.predict(new_points))
+print(model.predict_probabilities(new_points))
+</code>See <link to="https://github.com/Machine-Learning-Name-in-progress/ML-Library/blob/main/examples/classification/LDA.py">the plotting example</link>.
+</section>
+<section id="lda-7">
+<title>Practical interpretation</title>
+The sample count must exceed the number of classes. A singular pooled covariance causes numpy.linalg.LinAlgError. Increasing reg_param does not repair a feature with zero variance within every class, since its diagonal variance is also zero. Remove such a feature. When class covariance structures differ, <link to="qda.html">QDA</link> can be a useful alternative, but validate the choice rather than assuming it is better. Use x.reshape(1, -1) for a single observation. Select regularization using training/validation data, without using the test labels.
+</section>
+</chapter>
+</document>

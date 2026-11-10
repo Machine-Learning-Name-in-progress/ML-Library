@@ -1,0 +1,346 @@
+<document lang="en" type="paper">
+  <chapter id="ch:neural-networks">
+  <title>Neural Networks</title>
+
+  <intro>
+    Documentation for <c>ml_library.models.neural_network</c>.
+    The module provides dense layers, activation functions, losses and
+    optimizers. <c>MLPRegressor</c> provides single-output regression, while
+    <c>MLPClassifier</c> provides multiclass classification. Both use one hidden layer.
+    The classifier and newer activations described here refer to the implementation
+    integrated into main; the documentation branch does not itself include those model files.
+  </intro>
+
+  <section id="model">
+    <title>The regression model</title>
+    Let $X\in\mathbb{R}^{n\times d}$ contain $n$ samples as rows, and let
+    $y\in\mathbb{R}^{n\times 1}$ contain their targets. For $h$ hidden units,
+    the prediction is
+    <equation id="eq:model">
+      \hat y=\phi(XW_1+\mathbf{1}_n b_1)W_2+\mathbf{1}_n b_2.
+    </equation>
+    Here $W_1\in\mathbb{R}^{d\times h}$, $b_1\in\mathbb{R}^{1\times h}$,
+    $W_2\in\mathbb{R}^{h\times 1}$ and $b_2\in\mathbb{R}^{1\times 1}$.
+    The column $\mathbf{1}_n$ broadcasts the same bias to every sample.
+    The hidden activation $\phi$ acts elementwise and defaults to hyperbolic
+    tangent. The output is linear, so predictions are not restricted to
+    probabilities or a fixed interval.
+
+    <subsection id="training">
+      <title>Training and prediction</title>
+      <c>fit</c> minimizes mean squared error using the entire training set
+      at each epoch. It calls <c>SGD</c> with zero momentum; in this setting
+      the update is full batch gradient descent. Each call creates new
+      layers, an activation instance and an optimizer, so fitting again
+      restarts training. <c>predict</c> returns one value per sample.
+      Other losses and optimizers described below are standalone components
+      and are not configuration options of the regressor. The classifier allows
+      an optimizer class to be selected. Both estimators return themselves from
+      fit and record one loss value per epoch in <c>loss_history</c>.
+      The history is reset by every fit and measures training loss before each update,
+      not validation performance.
+
+      The public <c>activation</c> attribute holds the activation class,
+      such as <c>Tanh</c>. The private <c>_activation_instance</c> holds the
+      object created during fitting. The former is configuration; the latter
+      is part of the fitted network. Caches retain only the most recent
+      forward pass, which must precede the corresponding backward pass.
+      Layer weights, biases and their gradients form the public interface
+      used by optimizers; temporary caches and optimizer history are internal.
+    </subsection>
+  </section>
+
+
+  <section id="regression-example">
+    <title>Regression example</title>
+    This example fits a small regression network and predicts values for new inputs.
+    <code lang="python" numbered="false">
+import numpy as np
+from ml_library.models.neural_network import MLPRegressor
+from ml_library.utils._random import set_seed
+
+X = np.linspace(-1, 1, 30).reshape(-1, 1)
+y = 2 * X[:, 0] + 1
+set_seed(42)
+model = MLPRegressor(hidden_units=8, learning_rate=0.05, epochs=1000)
+model.fit(X, y)
+print(model.predict(np.array([[-0.5], [0.0], [0.5]])))
+    </code>
+    Inputs have shape (n_samples, n_features), and targets have shape (n_samples,).
+    Predictions approximate the target relation; this example illustrates usage,
+    not an evaluation on held-out data.
+  </section>
+
+  <section id="classification-model">
+    <title>The classification model</title>
+    For $K$ classes, the output weights have shape $h\times K$. The hidden
+    representation is mapped to logits $Z$, and Softmax produces probabilities:
+    <equation>p_{ik}=\frac{\exp(Z_{ik}-m_i)}{\sum_{j=1}^K\exp(Z_{ij}-m_i)},\qquad m_i=\max_j Z_{ij}.</equation>
+    Subtracting the row maximum leaves probabilities unchanged and avoids
+    overflow in exponentiation. Prediction selects the class with largest probability.
+    <subsection id="classifier-interface">
+      <title>Training and prediction</title>
+      <c>MLPClassifier</c> defaults to 32 hidden units, learning_rate=0.01,
+      300 epochs, ReLU and Adam. The optional lr argument overrides learning_rate.
+      The activation and optimizer arguments are classes, not fitted instances;
+      an optimizer must accept lr and provide step(layers). SGD and Adam are supported,
+      as is AdamW through the same interface. Training uses the complete batch.
+      <c>fit(X, y)</c> accepts numeric or string labels, or a matrix of one-hot targets.
+      For labels, classes are sorted; for one-hot targets, column indices are the classes.
+      Supply valid one-hot rows: the implementation checks finiteness and dimensions
+      but does not enforce binary entries or a row sum of one.
+      <c>predict_proba(X)</c> returns an $(n,K)$ probability matrix and
+      <c>predict(X)</c> returns a one-dimensional array of class labels.
+    </subsection>
+    <subsection id="classifier-gradient">
+      <title>Softmax and cross entropy</title>
+      For one observation, the Softmax Jacobian is
+      <equation>\frac{\partial p_k}{\partial z_j}=p_k(\mathbf{1}_{\{k=j\}}-p_j).</equation>
+      Its backward operation with incoming gradient $g$ is
+      $p\odot(g-\langle g,p\rangle\mathbf{1})$, avoiding an explicit Jacobian matrix.
+      For one-hot labels and the average loss
+      $L=-n^{-1}\sum_{i,k}y_{ik}\log p_{ik}$, the ideal unclipped composition gives
+      <equation>\frac{\partial L}{\partial Z_{ik}}=\frac{p_{ik}-y_{ik}}{n}.</equation>
+      The implementation propagates through separate loss and Softmax components.
+      Its probability clipping means the simplified expression above need not
+      match the implemented gradient at extreme probabilities.
+    </subsection>
+    <subsection id="classifier-example">
+      <title>Example</title>
+      <code lang="python" numbered="false">
+import numpy as np
+from ml_library.models.neural_network import MLPClassifier, ReLU, Adam
+from ml_library.utils._random import set_seed
+
+X = np.array([[-2., -1.], [-1., -2.], [2., 1.], [1., 2.], [-2., 2.], [-1., 3.]])
+y = np.array(["a", "a", "b", "b", "c", "c"])
+set_seed(42)
+model = MLPClassifier(hidden_units=8, activation=ReLU, optimizer=Adam)
+model.fit(X, y)
+print(model.predict(X))
+print(model.predict_proba(X))
+print(model.loss_history[-1])
+      </code>
+      This small example illustrates the API; prediction on the training set
+      does not evaluate generalization.
+    </subsection>
+  </section>
+
+  <section id="dense">
+    <title>Dense layers and backpropagation</title>
+    For a layer input $A\in\mathbb{R}^{n\times p}$, weights
+    $W\in\mathbb{R}^{p\times q}$ and bias $b\in\mathbb{R}^{1\times q}$,
+    <c>Dense.forward</c> computes $Z=AW+\mathbf{1}_n b$.
+    Let $G=\partial L/\partial Z\in\mathbb{R}^{n\times q}$ be the gradient
+    received from the next component. Then <c>Dense.backward</c> computes
+    <equations>
+      \frac{\partial L}{\partial W}&=A^\top G,\\
+      \frac{\partial L}{\partial b}&=\mathbf{1}_n^\top G,\\
+      \frac{\partial L}{\partial A}&=GW^\top.
+    </equations>
+    It stores the first two arrays in <c>grad_weights</c> and <c>grad_bias</c>
+    and returns the third. The loss supplies any averaging factor; the
+    layer does not divide these gradients by the batch size again.
+
+    <proposition id="prop:dense">
+      <title>Dense layer gradients</title>
+      The three expressions above follow from the chain rule applied to
+      $Z_{ij}=\sum_{k=1}^{p}A_{ik}W_{kj}+b_j$.
+    </proposition>
+    <proof of="prop:dense" collapsed="true">
+      Differentiate each output entry and sum its contribution to the loss:
+      <equations>
+        \frac{\partial L}{\partial W_{kj}}&=\sum_i G_{ij}A_{ik},\\
+        \frac{\partial L}{\partial b_j}&=\sum_i G_{ij},\\
+        \frac{\partial L}{\partial A_{ik}}&=\sum_j G_{ij}W_{kj}.
+      </equations>
+      These sums are exactly the entries of the stated matrix products.
+      The input is therefore cached during the forward pass so that the
+      weight gradient can be computed during the backward pass.
+    </proof>
+
+    <subsection id="initialization">
+      <title>Weight initialization</title>
+      A layer with $p$ inputs draws independent weights
+      $W_{kj}\sim\mathcal{N}(0,1/p)$ and starts with zero biases.
+      The standard deviation passed to the random generator is $1/\sqrt p$.
+      This scales the initial weighted sum with the number of inputs.
+
+      <proposition id="prop:variance">
+        <title>Variance of an initial weighted sum</title>
+        For a fixed input vector $a\in\mathbb{R}^p$, the initial output
+        $z_j=\sum_k a_kW_{kj}$ satisfies
+        <equation>
+          \mathbb{E}_W[z_j]=0,\qquad
+          \operatorname{Var}_W(z_j)=\frac{1}{p}\sum_k a_k^2.
+        </equation>
+      </proposition>
+      <proof of="prop:variance" collapsed="true">
+        Each weight has mean zero and variance $1/p$. Independence makes
+        all covariance terms vanish, leaving
+        $\operatorname{Var}_W(\sum_k a_kW_{kj})
+        =\sum_k a_k^2\operatorname{Var}(W_{kj})=\|a\|_2^2/p$.
+      </proof>
+      Inputs with average squared magnitude near one therefore produce
+      preactivations with variance near one. This describes the initial
+      linear sum, not a guarantee about variance after activation or during
+      training. The implementation uses this same scale for every activation;
+      it does not switch to a ReLU specific initialization.
+    </subsection>
+  </section>
+
+  <section id="activations">
+    <title>Activation functions</title>
+    For elementwise activations $H=\phi(Z)$ and incoming gradient $G=\partial L/\partial H$,
+    the chain rule gives
+    <equation>
+      \frac{\partial L}{\partial Z}=G\odot\phi'(Z),
+    </equation>
+    where $\odot$ denotes elementwise multiplication.
+    <equations>
+      \text{Linear:}\quad &\phi(z)=z,\qquad \phi'(z)=1,\\
+      \text{ReLU:}\quad &\phi(z)=\max(0,z),\qquad
+        \phi'(z)=\mathbf{1}_{\{z>0\}}\quad(z\ne0),\\
+      \text{Sigmoid:}\quad &\sigma(z)=\frac{1}{1+e^{-z}},\qquad
+        \sigma'(z)=\sigma(z)(1-\sigma(z)),\\
+      \text{Tanh:}\quad &\phi(z)=\tanh(z),\qquad
+        \phi'(z)=1-\tanh^2(z).
+    </equations>
+    ReLU is not differentiable at zero; <c>backward</c> chooses zero there.
+    Sigmoid evaluates equivalent expressions using $e^{-|z|}$ to avoid
+    exponential overflow. Sigmoid and Tanh save their outputs to reuse them
+    in the derivative. Linear passes the incoming gradient through unchanged.
+    <c>LeakyReLU</c> uses $\phi(z)=z$ for $z>0$ and $\phi(z)=\alpha z$
+    otherwise, with default $\alpha=0.01$. Its derivative is one on positive
+    inputs and alpha on negative inputs; backward chooses alpha at zero.
+    A positive alpha retains a gradient on the negative side, mitigating the
+    inactive-unit problem of ReLU. Softmax instead couples all class coordinates
+    and uses the Jacobian described in the classification section.
+    A linear hidden activation makes the whole regression model affine;
+    nonlinear activations allow the network to represent nonlinear relations.
+  </section>
+
+  <section id="losses">
+    <title>Loss functions</title>
+    <subsection id="mse">
+      <title>Mean squared error</title>
+      For arrays with $N$ entries, <c>MSE</c> returns
+      <equation>
+        L=\frac{1}{N}\sum_{r=1}^{N}(\hat y_r-y_r)^2,\qquad
+        \frac{\partial L}{\partial\hat y_r}=\frac{2}{N}(\hat y_r-y_r).
+      </equation>
+      Here $N$ is the total number of array entries, not necessarily the
+      number of rows. For the single output regressor, $N=n$.
+      Differentiating each squared term gives the displayed gradient.
+    </subsection>
+
+    <subsection id="cross-entropy">
+      <title>Cross entropy components</title>
+      For binary targets $y_r\in\{0,1\}$ and probabilities $0<p_r<1$,
+      <c>BinaryCrossEntropy</c> averages over all $N$ entries:
+      <equations>
+        L_{\mathrm{BCE}}&=-\frac{1}{N}\sum_r
+          [y_r\log p_r+(1-y_r)\log(1-p_r)],\\
+        \frac{\partial L_{\mathrm{BCE}}}{\partial p_r}
+          &=\frac{1}{N}\left(\frac{1-y_r}{1-p_r}-\frac{y_r}{p_r}\right).
+      </equations>
+      For one hot labels $y_{ik}$ and class probabilities $p_{ik}$,
+      <c>CategoricalCrossEntropy</c> uses a sum, not a batch average:
+      <equation>
+        L_{\mathrm{CCE}}=-\sum_{i,k}y_{ik}\log p_{ik},\qquad
+        \frac{\partial L_{\mathrm{CCE}}}{\partial p_{ik}}=-\frac{y_{ik}}{p_{ik}}.
+      </equation>
+      The caller supplies probabilities; these classes do not convert logits
+      into probabilities. The classifier uses Softmax outputs and divides the categorical loss
+      and its gradient by the number of samples to obtain a batch average.
+
+      In code, both losses clip probabilities to
+      $[\varepsilon,1-\varepsilon]$ before evaluating logs or denominators.
+      Their backward methods evaluate the formulas above at the clipped
+      probabilities without differentiating the clipping operation. Thus they
+      agree with the derivatives of the unclipped losses in the interior of
+      this interval, but are not the exact derivatives of the clipped forward
+      functions outside it. This distinction matters when checking gradients
+      near the boundaries.
+    </subsection>
+  </section>
+
+  <section id="optimizers">
+    <title>Parameter updates</title>
+    Write $\theta$ for any parameter array, $g_t$ for its current loss gradient
+    and $\eta>0$ for the learning rate. Updates act elementwise. State is
+    stored separately for each parameter key. Calls to <c>step</c> must keep
+    a consistent layer order; direct calls to <c>update</c> need distinct,
+    stable keys for different parameters when using stateful optimizers.
+
+    <subsection id="sgd">
+      <title>SGD and momentum</title>
+      With momentum $\mu\in[0,1)$ and $v_0=0$, <c>SGD</c> applies
+      <equation>
+        v_t=\mu v_{t-1}+\eta g_t,\qquad
+        \theta_t=\theta_{t-1}-v_t.
+      </equation>
+      For $\mu=0$, this reduces to $\theta_t=\theta_{t-1}-\eta g_t$.
+      The name of the optimizer does not imply that batches are sampled:
+      the caller decides which data produce $g_t$.
+    </subsection>
+
+    <subsection id="adam">
+      <title>Adam and AdamW</title>
+      <c>Adam</c> initializes $m_0=v_0=0$ and computes
+      <equations>
+        m_t&=\beta_1m_{t-1}+(1-\beta_1)g_t,\\
+        v_t&=\beta_2v_{t-1}+(1-\beta_2)g_t^2,\\
+        \hat m_t&=m_t/(1-\beta_1^t),\qquad
+        \hat v_t=v_t/(1-\beta_2^t),\\
+        \theta_t&=\theta_{t-1}-\eta\frac{\hat m_t}{\sqrt{\hat v_t}+\varepsilon}.
+      </equations>
+      The decay rates $\beta_1,\beta_2\in[0,1)$ control the moving averages;
+      $\varepsilon>0$ stabilizes the denominator. The step count $t$ is
+      maintained separately for each key.
+
+      <proposition id="prop:bias">
+        <title>Why divide by the correction factor?</title>
+        If every gradient has the same expectation $\mathbb{E}[g_s]=\bar g$,
+        then $\mathbb{E}[m_t]=(1-\beta_1^t)\bar g$. Dividing by
+        $1-\beta_1^t$ removes the bias caused by starting at zero under
+        this assumption.
+      </proposition>
+      <proof of="prop:bias" collapsed="true">
+        Expanding the recurrence gives
+        $m_t=(1-\beta_1)\sum_{s=1}^{t}\beta_1^{t-s}g_s$.
+        Taking expectations and summing the geometric series yields
+        $\mathbb{E}[m_t]=(1-\beta_1^t)\bar g$.
+        The same argument applies to $v_t$ when the second moment is constant.
+        Actual training gradients need not have constant moments, so this
+        calculation explains the initialization correction rather than
+        guaranteeing unbiased estimates throughout training.
+      </proof>
+
+      <c>AdamW</c> adds decoupled weight decay of strength $\lambda\ge0$:
+      <equation>
+        \theta_t=(1-\eta\lambda)\theta_{t-1}
+          -\eta\frac{\hat m_t}{\sqrt{\hat v_t}+\varepsilon}.
+      </equation>
+      Moments are computed from the supplied loss gradient, without adding
+      a regularization term to that gradient. In <c>step</c>, biases are
+      excluded from decay: the implementation recognizes parameter keys
+      containing <c>bias</c>. Direct calls without such a key apply decay.
+    </subsection>
+  </section>
+
+  <section id="usage">
+    <title>Practical interpretation</title>
+    Hidden units determine the width of the representation, epochs determine
+    how many parameter updates are performed, and the learning rate controls
+    their size. More epochs do not guarantee better validation performance.
+    Nonlinear network training is generally nonconvex; these update rules do
+    not guarantee a global optimum or decreasing loss at every step.
+    Feature scaling can make optimization more stable. Fit preprocessing on
+    training data only and use held out data to select hyperparameters.
+    Set the library seed with <c>ml_library.utils._random.set_seed</c> before
+    fitting when reproducing a run in the same numerical environment.
+  </section>
+
+  </chapter>
+</document>
